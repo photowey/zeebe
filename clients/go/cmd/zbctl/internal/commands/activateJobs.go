@@ -61,7 +61,7 @@ var activateJobsCmd = &cobra.Command{
 			return err
 		}
 
-		jobsCount := len(jobs)
+		jobsCount := len(jobs.Jobs)
 		if jobsCount > 0 {
 			if err := printJSON(jobs); err != nil {
 				return err

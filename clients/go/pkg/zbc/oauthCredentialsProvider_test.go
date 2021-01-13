@@ -758,7 +758,7 @@ func (s *oauthCredsProviderTestSuite) TestJobActivateRetry() {
 	// then
 	s.NoError(err)
 	s.GreaterOrEqual(1, credsProvider.(*custom).shouldRetryCalls)
-	s.NotEmpty(jobs)
+	s.NotEmpty(jobs.Jobs)
 }
 
 type custom struct {

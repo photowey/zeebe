@@ -154,7 +154,7 @@ func (s *integrationTestSuite) TestActivateJobs() {
 	}
 
 	// then
-	for _, job := range jobs {
+	for _, job := range jobs.Jobs {
 		s.EqualValues(workflow.GetWorkflowKey(), job.GetWorkflowKey())
 		s.EqualValues(workflow.GetBpmnProcessId(), job.GetBpmnProcessId())
 		s.EqualValues("service_task", job.GetElementId())
@@ -203,7 +203,7 @@ func (s *integrationTestSuite) TestFailJob() {
 	}
 
 	// then
-	for _, job := range jobs {
+	for _, job := range jobs.Jobs {
 		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 

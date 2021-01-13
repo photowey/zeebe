@@ -15,9 +15,10 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/zbc"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"os"
 	"strconv"
 	"strings"
@@ -201,8 +202,9 @@ func keyArg(key *int64) cobra.PositionalArgs {
 	}
 }
 
-func printJSON(value interface{}) error {
-	valueJSON, err := json.MarshalIndent(value, "", "  ")
+func printJSON(value proto.Message) error {
+	m := protojson.MarshalOptions{EmitUnpopulated: true, Indent: "  "}
+	valueJSON, err := m.Marshal(value)
 	if err == nil {
 		fmt.Println(string(valueJSON))
 	}
