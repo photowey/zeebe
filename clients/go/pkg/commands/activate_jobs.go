@@ -105,9 +105,7 @@ func (cmd *ActivateJobsCommand) Send(ctx context.Context) (*pb.ActivateJobsRespo
 				Jobs: activatedJobs,
 			}, err
 		}
-		for _, activatedJob := range response.Jobs {
-			activatedJobs = append(activatedJobs, activatedJob)
-		}
+		activatedJobs = append(activatedJobs, response.Jobs...)
 	}
 
 	return &pb.ActivateJobsResponse{
