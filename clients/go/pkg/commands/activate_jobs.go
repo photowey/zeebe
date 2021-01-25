@@ -16,6 +16,7 @@ package commands
 
 import (
 	"context"
+	"github.com/zeebe-io/zeebe/clients/go/pkg/entities"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
 	"io"
 	"log"
@@ -29,7 +30,7 @@ const (
 )
 
 type DispatchActivateJobsCommand interface {
-	Send(ctx context.Context) (*pb.ActivateJobsResponse, error)
+	Send(ctx context.Context) ([]entities.Job, error)
 }
 
 type ActivateJobsCommandStep1 interface {
@@ -78,14 +79,15 @@ func (cmd *ActivateJobsCommand) FetchVariables(fetchVariables ...string) Activat
 	return cmd
 }
 
-func (cmd *ActivateJobsCommand) Send(ctx context.Context) (*pb.ActivateJobsResponse, error) {
+func (cmd *ActivateJobsCommand) Send(ctx context.Context) ([]entities.Job, error) {
 	cmd.request.RequestTimeout = getLongPollingMillis(ctx)
 
 	stream, err := cmd.openStream(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var activatedJobs []*pb.ActivatedJob
+
+	var activatedJobs []entities.Job
 	for {
 		response, err := stream.Recv()
 		if err == io.EOF {
@@ -101,16 +103,14 @@ func (cmd *ActivateJobsCommand) Send(ctx context.Context) (*pb.ActivateJobsRespo
 		}
 
 		if err != nil {
-			return &pb.ActivateJobsResponse{
-				Jobs: activatedJobs,
-			}, err
+			return activatedJobs, err
 		}
-		activatedJobs = append(activatedJobs, response.Jobs...)
+		for _, activatedJob := range response.Jobs {
+			activatedJobs = append(activatedJobs, entities.Job{ActivatedJob: activatedJob})
+		}
 	}
 
-	return &pb.ActivateJobsResponse{
-		Jobs: activatedJobs,
-	}, nil
+	return activatedJobs, nil
 }
 
 func (cmd *ActivateJobsCommand) openStream(ctx context.Context) (pb.Gateway_ActivateJobsClient, error) {

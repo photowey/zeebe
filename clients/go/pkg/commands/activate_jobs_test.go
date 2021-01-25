@@ -19,6 +19,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/zeebe-io/zeebe/clients/go/internal/mock_pb"
 	"github.com/zeebe-io/zeebe/clients/go/internal/utils"
+	"github.com/zeebe-io/zeebe/clients/go/pkg/entities"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
 	"io"
 	"reflect"
@@ -96,10 +97,16 @@ func TestActivateJobsCommand(t *testing.T) {
 		},
 	}
 
-	var expectedJobs []*pb.ActivatedJob
-	expectedJobs = append(expectedJobs, response1.Jobs...)
-	expectedJobs = append(expectedJobs, response2.Jobs...)
-	expectedJobs = append(expectedJobs, response3.Jobs...)
+	var expectedJobs []entities.Job
+	for _, job := range response1.Jobs {
+		expectedJobs = append(expectedJobs, entities.Job{ActivatedJob: job})
+	}
+	for _, job := range response2.Jobs {
+		expectedJobs = append(expectedJobs, entities.Job{ActivatedJob: job})
+	}
+	for _, job := range response3.Jobs {
+		expectedJobs = append(expectedJobs, entities.Job{ActivatedJob: job})
+	}
 
 	gomock.InOrder(
 		stream.EXPECT().Recv().Return(response1, nil),
@@ -121,11 +128,11 @@ func TestActivateJobsCommand(t *testing.T) {
 		t.Errorf("Failed to send request")
 	}
 
-	if len(jobs.Jobs) != len(expectedJobs) {
+	if len(jobs) != len(expectedJobs) {
 		t.Error("Failed to receive all jobs: ", jobs, expectedJobs)
 	}
 
-	for i, job := range jobs.Jobs {
+	for i, job := range jobs {
 		if !reflect.DeepEqual(job, expectedJobs[i]) {
 			t.Error("Failed to receive job: ", job, expectedJobs[i])
 		}
@@ -161,7 +168,7 @@ func TestActivateJobsCommandWithTimeout(t *testing.T) {
 		t.Errorf("Failed to send request")
 	}
 
-	if len(jobs.Jobs) != 0 {
+	if len(jobs) != 0 {
 		t.Errorf("Failed to receive response")
 	}
 }
@@ -195,7 +202,7 @@ func TestActivateJobsCommandWithWorkerName(t *testing.T) {
 		t.Errorf("Failed to send request")
 	}
 
-	if len(jobs.Jobs) != 0 {
+	if len(jobs) != 0 {
 		t.Errorf("Failed to receive response")
 	}
 }
@@ -232,7 +239,7 @@ func TestActivateJobsCommandWithFetchVariables(t *testing.T) {
 		t.Errorf("Failed to send request")
 	}
 
-	if len(jobs.Jobs) != 0 {
+	if len(jobs) != 0 {
 		t.Errorf("Failed to receive response")
 	}
 }
