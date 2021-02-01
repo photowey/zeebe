@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
-	"google.golang.org/protobuf/encoding/protojson"
 	"sort"
 )
 
@@ -43,7 +42,7 @@ type HumanPrinter struct {
 }
 
 func (jsonPrinter *JSONPrinter) print(resp *pb.TopologyResponse) error {
-	return printTopologyJSON(resp)
+	return printJSON(resp)
 }
 
 func (humanPrinter *HumanPrinter) print(resp *pb.TopologyResponse) error {
@@ -158,13 +157,4 @@ func healthToString(health pb.Partition_PartitionBrokerHealth) string {
 	default:
 		return unknownState
 	}
-}
-
-func printTopologyJSON(resp *pb.TopologyResponse) error {
-	m := protojson.MarshalOptions{EmitUnpopulated: true, Indent: "  "}
-	valueJSON, err := m.Marshal(resp)
-	if err == nil {
-		fmt.Println(string(valueJSON))
-	}
-	return err
 }
