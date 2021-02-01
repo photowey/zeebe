@@ -61,22 +61,14 @@ var activateJobsCmd = &cobra.Command{
 			return err
 		}
 
-		jobsCount := len(jobs)
 		var activatedJobs []*pb.ActivatedJob
-		if jobsCount > 0 {
-			for _, job := range jobs {
-				activatedJobs = append(activatedJobs, job.ActivatedJob)
-			}
-		} else {
-			activatedJobs = make([]*pb.ActivatedJob, 0)
+		for _, job := range jobs {
+			activatedJobs = append(activatedJobs, job.ActivatedJob)
 		}
 
-		if err := printJSON(&pb.ActivateJobsResponse{
+		return printJSON(&pb.ActivateJobsResponse{
 			Jobs: activatedJobs,
-		}); err != nil {
-			return err
-		}
-		return nil
+		})
 	},
 }
 
