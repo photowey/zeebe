@@ -21,71 +21,16 @@ import (
 	"sort"
 )
 
-type ByNodeID []*pb.BrokerInfo
-
-func (a ByNodeID) Len() int           { return len(a) }
-func (a ByNodeID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByNodeID) Less(i, j int) bool { return a[i].NodeId < a[j].NodeId }
-
-type ByPartitionID []*pb.Partition
-
-func (a ByPartitionID) Len() int           { return len(a) }
-func (a ByPartitionID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByPartitionID) Less(i, j int) bool { return a[i].PartitionId < a[j].PartitionId }
-
-type Printer interface {
-	print(resp *pb.TopologyResponse) error
-}
-type JSONPrinter struct {
-}
-type HumanPrinter struct {
+type StatusResponseWrapper struct {
+	response *pb.TopologyResponse
 }
 
-func (jsonPrinter *JSONPrinter) print(resp *pb.TopologyResponse) error {
-	return printJSON(resp)
+func (s StatusResponseWrapper) protoMessage() ProtoMessage {
+	return s.response
 }
 
-func (humanPrinter *HumanPrinter) print(resp *pb.TopologyResponse) error {
-	printStatus(resp)
-	return nil
-}
-
-var (
-	outputFlag string
-	outputMap  = map[string]Printer{}
-)
-
-const humanOutput = "human"
-const jsonOutput = "json"
-
-var statusCmd = &cobra.Command{
-	Use:     "status",
-	Short:   "Checks the current status of the cluster",
-	Args:    cobra.NoArgs,
-	PreRunE: initClient,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		var err error
-		printer := outputMap[outputFlag]
-		if printer == nil {
-			return fmt.Errorf("cannot find proper printer for %s output", outputFlag)
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-		defer cancel()
-
-		resp, err := client.NewTopologyCommand().Send(ctx)
-		if err != nil {
-			return err
-		}
-
-		err = printer.print(resp)
-		if err != nil {
-			return err
-		}
-		return nil
-	},
-}
-
-func printStatus(resp *pb.TopologyResponse) {
+func (s StatusResponseWrapper) print() {
+	resp := s.response
 	gatewayVersion := "unavailable"
 	if resp.GatewayVersion != "" {
 		gatewayVersion = resp.GatewayVersion
@@ -121,18 +66,52 @@ func printStatus(resp *pb.TopologyResponse) {
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(statusCmd)
+type ByNodeID []*pb.BrokerInfo
 
-	outputMap[jsonOutput] = &JSONPrinter{}
-	outputMap[humanOutput] = &HumanPrinter{}
-	statusCmd.Flags().StringVarP(
-		&outputFlag,
-		"output",
-		"o",
-		humanOutput,
-		"Specify output format. Default is human readable. Possible Values: human, json",
-	)
+func (a ByNodeID) Len() int           { return len(a) }
+func (a ByNodeID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByNodeID) Less(i, j int) bool { return a[i].NodeId < a[j].NodeId }
+
+type ByPartitionID []*pb.Partition
+
+func (a ByPartitionID) Len() int           { return len(a) }
+func (a ByPartitionID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByPartitionID) Less(i, j int) bool { return a[i].PartitionId < a[j].PartitionId }
+
+var statusCmd = &cobra.Command{
+	Use:     "status",
+	Short:   "Checks the current status of the cluster",
+	Args:    cobra.NoArgs,
+	PreRunE: initClient,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var (
+			err     error
+			printer Printer
+		)
+		printer, err = findPrinter()
+		if err != nil {
+			return err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		defer cancel()
+
+		var resp *pb.TopologyResponse
+		resp, err = client.NewTopologyCommand().Send(ctx)
+		if err != nil {
+			return err
+		}
+
+		err = printer.print(StatusResponseWrapper{resp})
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+}
+
+func init() {
+	addOutputFlag(statusCmd)
+	rootCmd.AddCommand(statusCmd)
 }
 
 const unknownState = "Unknown"
