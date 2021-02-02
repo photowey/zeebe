@@ -17,8 +17,21 @@ package commands
 import (
 	"context"
 	"github.com/spf13/cobra"
+	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
 	"log"
 )
+
+type SetVariablesResponseWrapper struct {
+	resp *pb.SetVariablesResponse
+}
+
+func (s SetVariablesResponseWrapper) protoMessage() ProtoMessage {
+	return s.resp
+}
+
+func (s SetVariablesResponseWrapper) print() {
+	log.Println("Set the variables of element instance with key", setVariablesKey, "to", setVariablesVariablesFlag, "with command", s.resp.GetKey())
+}
 
 var (
 	setVariablesKey           int64
@@ -32,6 +45,14 @@ var setVariablesCmd = &cobra.Command{
 	Args:    keyArg(&setVariablesKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var (
+			err     error
+			printer Printer
+		)
+		printer, err = findPrinter()
+		if err != nil {
+			return err
+		}
 		request, err := client.NewSetVariablesCommand().ElementInstanceKey(setVariablesKey).VariablesFromString(setVariablesVariablesFlag)
 		if err != nil {
 			return err
@@ -42,15 +63,16 @@ var setVariablesCmd = &cobra.Command{
 		defer cancel()
 
 		response, err := request.Send(ctx)
-		if err == nil {
-			log.Println("Set the variables of element instance with key", setVariablesKey, "to", setVariablesVariablesFlag, "with command", response.GetKey())
+		if err != nil {
+			return err
 		}
-
+		err = printer.print(SetVariablesResponseWrapper{response})
 		return err
 	},
 }
 
 func init() {
+	addOutputFlag(setVariablesCmd)
 	setCmd.AddCommand(setVariablesCmd)
 
 	setVariablesCmd.Flags().StringVar(&setVariablesVariablesFlag, "variables", "{}", "Specify the variables as JSON object string")

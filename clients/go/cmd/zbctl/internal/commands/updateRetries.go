@@ -18,6 +18,7 @@ import (
 	"context"
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/commands"
+	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
 	"log"
 )
 
@@ -26,25 +27,48 @@ var (
 	updateRetriesFlag int32
 )
 
+type UpdateJobRetriesResponseWrapper struct {
+	response *pb.UpdateJobRetriesResponse
+}
+
+func (u UpdateJobRetriesResponseWrapper) protoMessage() ProtoMessage {
+	return u.response
+}
+
+func (u UpdateJobRetriesResponseWrapper) print() {
+	log.Println("Updated the retries of job with key", updateRetriesKey, "to", updateRetriesFlag)
+}
+
 var updateRetriesCmd = &cobra.Command{
 	Use:     "retries <key>",
 	Short:   "Update retries of a job",
 	Args:    keyArg(&updateRetriesKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var (
+			err     error
+			printer Printer
+		)
+		printer, err = findPrinter()
+		if err != nil {
+			return err
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		_, err := client.NewUpdateJobRetriesCommand().JobKey(updateRetriesKey).Retries(updateRetriesFlag).Send(ctx)
-		if err == nil {
-			log.Println("Updated the retries of job with key", updateRetriesKey, "to", updateRetriesFlag)
+		var resp *pb.UpdateJobRetriesResponse
+		resp, err = client.NewUpdateJobRetriesCommand().JobKey(updateRetriesKey).Retries(updateRetriesFlag).Send(ctx)
+		if err != nil {
+			return err
 		}
+		err = printer.print(UpdateJobRetriesResponseWrapper{resp})
 
 		return err
 	},
 }
 
 func init() {
+	addOutputFlag(updateRetriesCmd)
 	updateCmd.AddCommand(updateRetriesCmd)
 	updateRetriesCmd.Flags().Int32Var(&updateRetriesFlag, "retries", commands.DefaultJobRetries, "Specify retries of job")
 	if err := updateRetriesCmd.MarkFlagRequired("retries"); err != nil {

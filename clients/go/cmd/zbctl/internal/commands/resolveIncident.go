@@ -17,8 +17,21 @@ package commands
 import (
 	"context"
 	"github.com/spf13/cobra"
+	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
 	"log"
 )
+
+type ResolveIncidentResponseWrapper struct {
+	resp *pb.ResolveIncidentResponse
+}
+
+func (r ResolveIncidentResponseWrapper) protoMessage() ProtoMessage {
+	return r.resp
+}
+
+func (r ResolveIncidentResponseWrapper) print() {
+	log.Println("Resolved an incident of a workflow instance with key", incidentKey)
+}
 
 var (
 	incidentKey int64
@@ -30,18 +43,28 @@ var resolveIncidentCommand = &cobra.Command{
 	Args:    keyArg(&incidentKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		var (
+			err     error
+			printer Printer
+		)
+		printer, err = findPrinter()
+		if err != nil {
+			return err
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		_, err := client.NewResolveIncidentCommand().IncidentKey(incidentKey).Send(ctx)
-		if err == nil {
-			log.Println("Resolved an incident of a workflow instance with key", incidentKey)
+		var resp *pb.ResolveIncidentResponse
+		resp, err = client.NewResolveIncidentCommand().IncidentKey(incidentKey).Send(ctx)
+		if err != nil {
+			return err
 		}
-
+		err = printer.print(ResolveIncidentResponseWrapper{resp})
 		return err
 	},
 }
 
 func init() {
+	addOutputFlag(resolveIncidentCommand)
 	resolveCmd.AddCommand(resolveIncidentCommand)
 }

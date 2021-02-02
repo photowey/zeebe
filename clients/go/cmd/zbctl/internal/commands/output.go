@@ -34,9 +34,8 @@ func findPrinter() (Printer, error) {
 	printer := outputMap[outputFlag]
 	if printer == nil {
 		return nil, fmt.Errorf("cannot find proper printer for %s output", outputFlag)
-	} else {
-		return printer, nil
 	}
+	return printer, nil
 }
 
 const humanOutput = "human"
