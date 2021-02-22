@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.journal.file;
+package io.zeebe.journal.file.record;
 
-import java.nio.ByteBuffer;
-import java.util.zip.CRC32;
+public class InvalidRecordException extends RuntimeException {
 
-public final class ChecksumGenerator {
-
-  private final CRC32 crc32 = new CRC32();
-
-  /** Compute checksum of given ByteBuffer */
-  public long compute(final ByteBuffer buffer) {
-    crc32.reset();
-    crc32.update(buffer);
-    return crc32.getValue();
+  public InvalidRecordException(final String message) {
+    super(message);
   }
 }

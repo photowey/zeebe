@@ -16,22 +16,19 @@
 package io.zeebe.journal.file.record;
 
 import io.zeebe.journal.JournalRecord;
+import io.zeebe.journal.StorageException.InvalidIndex;
 import io.zeebe.journal.file.ChecksumGenerator;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 
-/**
- * Common methods used by SegmentWriter and MappedJournalSegmentReader to read records from a
- * buffer.
- */
+/** Common methods used by SegmentWriter and SegmentReader to read records from a buffer. */
 public final class JournalRecordReaderUtil {
-  private final JournalRecordBufferReader serializer = new KryoSerializer();
 
-  private final int maxEntrySize;
-  private final ChecksumGenerator checksumGenerator = new ChecksumGenerator();
+  private final JournalRecordSerializer serializer;
 
-  public JournalRecordReaderUtil(final int maxEntrySize) {
-    this.maxEntrySize = maxEntrySize;
+  public JournalRecordReaderUtil(final JournalRecordSerializer serializer) {
+    this.serializer = serializer;
   }
 
   /**
@@ -42,37 +39,61 @@ public final class JournalRecordReaderUtil {
     // Mark the buffer so it can be reset if necessary.
     buffer.mark();
 
+    if (buffer.position() + serializer.getMetadataLength() > buffer.limit()) {
+      // Reached end of the segment
+      return null;
+    }
+
+    final int startPosition = buffer.position();
     try {
-      // Read the length of the record.
-      final int length = buffer.getInt();
+      final UnsafeBuffer directBuffer = new UnsafeBuffer(buffer.slice());
+      if (!serializer.hasMetadata(directBuffer)) {
+        // No valid record here
+        return null;
+      }
+      final JournalRecordMetadata metadata = serializer.readMetadata(directBuffer);
 
-      // If the buffer length is zero then return.
-      if (length <= 0 || length > maxEntrySize) {
+      final int metadataLength = serializer.getMetadataLength(directBuffer);
+      final var recordLength = metadata.length();
+      if (buffer.position() + metadataLength + recordLength > buffer.limit()) {
+        // There is no valid record here. This should not happen, if we have magic headers before
+        // each record.
+        return null;
+      }
+
+      // verify checksum
+      buffer.position(startPosition + metadataLength);
+      final long checksum = computeChecksum(buffer.slice(), recordLength);
+
+      if (checksum != metadata.checksum()) {
+        // TODO: Throw an exception, when we introduce magic headers before each record
         buffer.reset();
         return null;
       }
 
-      final ByteBuffer slice = buffer.slice();
-      slice.limit(length);
+      // Read record
+      buffer.position(startPosition + metadataLength);
+      final UnsafeBuffer recordBuffer = new UnsafeBuffer(buffer, buffer.position(), recordLength);
+      final JournalIndexedRecord record = serializer.readRecord(recordBuffer);
 
-      // If the stored checksum equals the computed checksum, return the record.
-      slice.rewind();
-      final JournalRecord record = serializer.read(slice);
-      final var checksum = record.checksum();
-      // TODO: checksum should also include asqn.
-      // TODO: It is now copying the data to calculate the checksum. This should be fixed.
-      final var expectedChecksum = checksumGenerator.compute(record.data());
-      if (checksum != expectedChecksum || expectedIndex != record.index()) {
+      if (record != null && expectedIndex != record.index()) {
         buffer.reset();
-        return null;
+        throw new InvalidIndex(
+            "Expected to read a record with next index"); // TODO : Update exception type, message
       }
-      buffer.position(buffer.position() + length);
-      buffer.mark();
-      return record;
+      buffer.position(startPosition + metadataLength + recordLength);
+      return new PersistedJournalRecord(metadata, record);
 
     } catch (final BufferUnderflowException e) {
       buffer.reset();
     }
     return null;
+  }
+
+  private long computeChecksum(final ByteBuffer buffer, final int length) {
+    final var checksumGenerator = new ChecksumGenerator();
+    final var record = buffer.slice();
+    record.limit(length);
+    return checksumGenerator.compute(record);
   }
 }

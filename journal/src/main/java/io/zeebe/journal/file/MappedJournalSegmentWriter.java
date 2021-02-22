@@ -20,8 +20,12 @@ import io.zeebe.journal.JournalRecord;
 import io.zeebe.journal.StorageException;
 import io.zeebe.journal.StorageException.InvalidChecksum;
 import io.zeebe.journal.StorageException.InvalidIndex;
-import io.zeebe.journal.file.record.JournalRecordBufferWriter;
+import io.zeebe.journal.file.record.JournalIndexedRecord;
+import io.zeebe.journal.file.record.JournalIndexedRecordImpl;
+import io.zeebe.journal.file.record.JournalRecordMetadata;
+import io.zeebe.journal.file.record.JournalRecordMetadataImpl;
 import io.zeebe.journal.file.record.JournalRecordReaderUtil;
+import io.zeebe.journal.file.record.JournalRecordSerializer;
 import io.zeebe.journal.file.record.KryoSerializer;
 import io.zeebe.journal.file.record.PersistedJournalRecord;
 import java.nio.BufferOverflowException;
@@ -30,6 +34,8 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import org.agrona.DirectBuffer;
 import org.agrona.IoUtil;
+import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 
 /** Segment writer. */
 class MappedJournalSegmentWriter {
@@ -43,7 +49,7 @@ class MappedJournalSegmentWriter {
   private final JournalRecordReaderUtil recordUtil;
   private final int maxEntrySize;
   private final ChecksumGenerator checksumGenerator = new ChecksumGenerator();
-  private final JournalRecordBufferWriter serializer = new KryoSerializer();
+  private final JournalRecordSerializer serializer = new KryoSerializer();
 
   MappedJournalSegmentWriter(
       final JournalSegmentFile file,
@@ -52,7 +58,7 @@ class MappedJournalSegmentWriter {
       final JournalIndex index) {
     this.segment = segment;
     this.maxEntrySize = maxEntrySize;
-    recordUtil = new JournalRecordReaderUtil(maxEntrySize);
+    recordUtil = new JournalRecordReaderUtil(serializer);
     this.index = index;
     firstIndex = segment.index();
     buffer = mapFile(file, segment);
@@ -88,9 +94,31 @@ class MappedJournalSegmentWriter {
 
     // TODO: Should reject append if the asqn is not greater than the previous record
 
-    final int recordStartPosition = buffer.position();
-    lastEntry = write(buffer, recordIndex, asqn, data);
-    index.index(lastEntry, recordStartPosition);
+    final MutableDirectBuffer writeBuffer = new UnsafeBuffer();
+    final int startPosition = buffer.position();
+    final int metadataLength = serializer.getMetadataLength();
+
+    final JournalIndexedRecord indexedRecord =
+        new JournalIndexedRecordImpl(recordIndex, asqn, data);
+    checkCanWrite(buffer, indexedRecord);
+
+    final int recordLength;
+    try {
+      recordLength =
+          writeRecord(buffer, writeBuffer, startPosition + metadataLength, indexedRecord);
+    } catch (final BufferOverflowException boe) {
+      buffer.position(startPosition);
+      throw boe;
+    }
+
+    final long checksum = computeChecksum(buffer, startPosition + metadataLength, recordLength);
+
+    final JournalRecordMetadata metadata =
+        writeMetadata(buffer, writeBuffer, startPosition, metadataLength, recordLength, checksum);
+
+    updateLastWrittenEntry(metadata, indexedRecord, startPosition);
+
+    buffer.position(startPosition + metadataLength + recordLength);
     return lastEntry;
   }
 
@@ -105,72 +133,97 @@ class MappedJournalSegmentWriter {
               nextIndex, record.index()));
     }
 
-    final int recordStartPosition = buffer.position();
-    lastEntry = write(buffer, record);
-    index.index(lastEntry, recordStartPosition);
-  }
+    final MutableDirectBuffer writeBuffer = new UnsafeBuffer();
+    final int startPosition = buffer.position();
+    final int metadataLength = serializer.getMetadataLength();
 
-  /**
-   * Create and writes a new JournalRecord with the given index,asqn and data to the buffer. After
-   * the method returns, the position of buffer will be advanced to a position were the next record
-   * will be written.
-   */
-  private JournalRecord write(
-      final ByteBuffer buffer, final long index, final long asqn, final DirectBuffer data) {
+    final JournalIndexedRecord indexedRecord =
+        new JournalIndexedRecordImpl(record.index(), record.asqn(), record.data());
+    checkCanWrite(buffer, indexedRecord);
 
-    // compute checksum and construct the record
-    // TODO: checksum should also include asqn. https://github.com/zeebe-io/zeebe/issues/6218
-    // TODO: It is now copying the data to calculate the checksum. This should be fixed when
-    // we change the serialization format. https://github.com/zeebe-io/zeebe/issues/6219
-    final var checksum = checksumGenerator.compute(data);
-    final var recordToWrite = new PersistedJournalRecord(index, asqn, checksum, data);
-
-    writeInternal(buffer, recordToWrite);
-    return recordToWrite;
-  }
-
-  /**
-   * Write the record to the buffer. After the method returns, the position of buffer will be
-   * advanced to a position were the next record will be written.
-   */
-  private JournalRecord write(final ByteBuffer buffer, final JournalRecord record) {
-    final var checksum = checksumGenerator.compute(record.data());
-    if (checksum != record.checksum()) {
-      throw new InvalidChecksum("Checksum invalid for record " + record);
+    final int recordLength;
+    try {
+      recordLength =
+          writeRecord(buffer, writeBuffer, startPosition + metadataLength, indexedRecord);
+    } catch (final BufferOverflowException boe) {
+      buffer.position(startPosition);
+      throw boe;
     }
-    writeInternal(buffer, record);
-    return record;
+
+    final long checksum = computeChecksum(buffer, startPosition + metadataLength, recordLength);
+
+    if (record.checksum() != checksum) {
+      buffer.position(startPosition);
+      throw new InvalidChecksum(
+          String.format("Failed to append record %s. Checksum does not match", record));
+    }
+
+    final JournalRecordMetadata metadata =
+        writeMetadata(buffer, writeBuffer, startPosition, metadataLength, recordLength, checksum);
+
+    updateLastWrittenEntry(metadata, indexedRecord, startPosition);
+
+    buffer.position(startPosition + metadataLength + recordLength);
   }
 
-  private void writeInternal(final ByteBuffer buffer, final JournalRecord recordToWrite) {
-    final int recordStartPosition = buffer.position();
-    buffer.mark();
-    if (recordStartPosition + Integer.BYTES > buffer.limit()) {
+  private void updateLastWrittenEntry(
+      final JournalRecordMetadata metadata,
+      final JournalIndexedRecord recordRead,
+      final int startPosition) {
+    lastEntry = new PersistedJournalRecord(metadata, recordRead);
+    index.index(lastEntry, startPosition);
+  }
+
+  private JournalRecordMetadata writeMetadata(
+      final ByteBuffer buffer,
+      final MutableDirectBuffer writeBuffer,
+      final int startPosition,
+      final int metadataLength,
+      final int recordLength,
+      final long checksum) {
+    writeBuffer.wrap(buffer, startPosition, metadataLength);
+    final JournalRecordMetadata recordMetadata =
+        new JournalRecordMetadataImpl(checksum, recordLength);
+    serializer.write(recordMetadata, writeBuffer);
+    return recordMetadata;
+  }
+
+  private int writeRecord(
+      final ByteBuffer buffer,
+      final MutableDirectBuffer writeBuffer,
+      final int offset,
+      final JournalIndexedRecord indexedRecord) {
+    writeBuffer.wrap(buffer, offset, buffer.limit() - offset);
+    final var recordLength = serializer.write(indexedRecord, writeBuffer);
+    return recordLength;
+  }
+
+  private void checkCanWrite(final ByteBuffer buffer, final JournalIndexedRecord indexedRecord) {
+    final var recordOffset = serializer.getMetadataLength();
+
+    final int estimatedRecordLength =
+        indexedRecord
+            .data()
+            .capacity(); // approximate as Kryo cannot pre-calculate the size without serializing
+    // the entry.
+    if (estimatedRecordLength > maxEntrySize) {
+      throw new StorageException.TooLarge(
+          "Entry size "
+              + estimatedRecordLength
+              + " exceeds maximum allowed bytes ("
+              + maxEntrySize
+              + ")");
+    }
+    if (buffer.position() + recordOffset + estimatedRecordLength > buffer.limit()) {
       throw new BufferOverflowException();
     }
+  }
 
-    buffer.position(recordStartPosition + Integer.BYTES);
-    try {
-      serializer.write(recordToWrite, buffer);
-    } catch (final BufferOverflowException e) {
-      buffer.reset();
-      throw e;
-    }
-
-    final int length = buffer.position() - (recordStartPosition + Integer.BYTES);
-
-    // If the entry length exceeds the maximum entry size then throw an exception.
-    if (length > maxEntrySize) {
-      // Just reset the buffer. There's no need to zero the bytes since we haven't written the
-      // length or checksum.
-      buffer.reset();
-      throw new StorageException.TooLarge(
-          "Entry size " + length + " exceeds maximum allowed bytes (" + maxEntrySize + ")");
-    }
-
-    buffer.position(recordStartPosition);
-    buffer.putInt(length);
-    buffer.position(recordStartPosition + Integer.BYTES + length);
+  private long computeChecksum(final ByteBuffer buffer, final int offset, final int length) {
+    buffer.position(offset);
+    final var record = buffer.slice();
+    record.limit(length);
+    return checksumGenerator.compute(record);
   }
 
   private void reset(final long index) {
@@ -210,8 +263,8 @@ class MappedJournalSegmentWriter {
 
     if (index < segment.index()) {
       buffer.position(JournalSegmentDescriptor.BYTES);
-      buffer.putInt(0);
-      buffer.putInt(0);
+      buffer.putLong(0);
+      buffer.putLong(0);
       buffer.position(JournalSegmentDescriptor.BYTES);
     } else {
       // Reset the writer to the given index.
@@ -219,8 +272,8 @@ class MappedJournalSegmentWriter {
 
       // Zero entries after the given index.
       final int position = buffer.position();
-      buffer.putInt(0);
-      buffer.putInt(0);
+      buffer.putLong(0);
+      buffer.putLong(0);
       buffer.position(position);
     }
   }

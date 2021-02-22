@@ -15,17 +15,29 @@
  */
 package io.zeebe.journal.file.record;
 
-import io.zeebe.journal.JournalRecord;
-import java.nio.ByteBuffer;
+import org.agrona.DirectBuffer;
 
-public interface JournalRecordBufferWriter {
+/** JournalIndexedRecord is a part of {@link PersistedJournalRecord} */
+public interface JournalIndexedRecord {
 
   /**
-   * Writes a {@link JournalRecord} to the buffer at it's current position ({@code
-   * buffer.position()})
+   * The index of the record
    *
-   * @param record to write
-   * @param buffer to which the record will be written
+   * @return index
    */
-  void write(JournalRecord record, ByteBuffer buffer);
+  long index();
+
+  /**
+   * The asqn of the record
+   *
+   * @return asqn
+   */
+  long asqn();
+
+  /**
+   * The data of the record
+   *
+   * @return the data
+   */
+  DirectBuffer data();
 }

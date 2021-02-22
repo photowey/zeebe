@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.journal.file;
+package io.zeebe.journal.file.record;
 
-import java.nio.ByteBuffer;
-import java.util.zip.CRC32;
+/** JournalRecordMetadata is a part of {@link PersistedJournalRecord} */
+public interface JournalRecordMetadata {
 
-public final class ChecksumGenerator {
+  /**
+   * The checksum of the {@link JournalIndexedRecord} in {@link PersistedJournalRecord}.
+   *
+   * @return
+   */
+  long checksum();
 
-  private final CRC32 crc32 = new CRC32();
-
-  /** Compute checksum of given ByteBuffer */
-  public long compute(final ByteBuffer buffer) {
-    crc32.reset();
-    crc32.update(buffer);
-    return crc32.getValue();
-  }
+  /**
+   * The length of the {@link JournalIndexedRecord} in {@link PersistedJournalRecord}.
+   *
+   * @return
+   */
+  int length();
 }

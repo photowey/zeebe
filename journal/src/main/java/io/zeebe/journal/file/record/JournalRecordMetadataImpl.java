@@ -15,17 +15,28 @@
  */
 package io.zeebe.journal.file.record;
 
-import io.zeebe.journal.JournalRecord;
-import java.nio.ByteBuffer;
+public final class JournalRecordMetadataImpl implements JournalRecordMetadata {
 
-public interface JournalRecordBufferReader {
+  private final long checksum;
+  private final int length;
 
-  /**
-   * Reads the {@link JournalRecord} from the buffer at it's current position ({@code *
-   * buffer.position()}). A valid record must exist in the buffer at this position.
-   *
-   * @param buffer to read
-   * @return a journal record that is read.
-   */
-  JournalRecord read(ByteBuffer buffer);
+  public JournalRecordMetadataImpl(final long checksum, final int recordLength) {
+    this.checksum = checksum;
+    length = recordLength;
+  }
+
+  @Override
+  public long checksum() {
+    return checksum;
+  }
+
+  @Override
+  public int length() {
+    return length;
+  }
+
+  @Override
+  public String toString() {
+    return "JournalRecordMetadataImpl{" + "checksum=" + checksum + ", length=" + length + '}';
+  }
 }
