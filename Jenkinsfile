@@ -64,6 +64,10 @@ pipeline {
                 timeout(time: shortTimeoutMinutes, unit: 'MINUTES') {
                     setHumanReadableBuildDisplayName()
 
+		    container('maven') {
+                        sh '.ci/scripts/distribution/ensure-naming-for-process.sh'
+		    }
+
                     prepareMavenContainer()
                     prepareMavenContainer('jdk8')
                     container('golang') {
