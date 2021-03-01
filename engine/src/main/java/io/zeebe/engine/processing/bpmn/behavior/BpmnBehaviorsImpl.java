@@ -18,6 +18,7 @@ import io.zeebe.engine.processing.streamprocessor.writers.TypedCommandWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.TypedResponseWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.TypedStreamWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.Writers;
+import io.zeebe.engine.processing.variable.VariableBehavior;
 import io.zeebe.engine.state.ZeebeState;
 import io.zeebe.protocol.record.value.BpmnElementType;
 import java.util.function.Function;
@@ -36,6 +37,7 @@ public final class BpmnBehaviorsImpl implements BpmnBehaviors {
   private final TypedStreamWriter streamWriter;
   private final BpmnWorkflowResultSenderBehavior workflowResultSenderBehavior;
   private final BpmnBufferedMessageStartEventBehavior bufferedMessageStartEventBehavior;
+  private final VariableBehavior variableBehavior;
 
   public BpmnBehaviorsImpl(
       final ExpressionProcessor expressionBehavior,
@@ -51,9 +53,13 @@ public final class BpmnBehaviorsImpl implements BpmnBehaviors {
     this.streamWriter = streamWriter;
     this.expressionBehavior = expressionBehavior;
 
-    stateBehavior = new BpmnStateBehavior(zeebeState);
+    variableBehavior =
+        new VariableBehavior(
+            zeebeState.getVariableState(), writers.state(), zeebeState.getKeyGenerator());
+    stateBehavior = new BpmnStateBehavior(zeebeState, variableBehavior, writers.state());
     stateTransitionGuard = new WorkflowInstanceStateTransitionGuard(stateBehavior);
-    variableMappingBehavior = new BpmnVariableMappingBehavior(expressionBehavior, zeebeState);
+    variableMappingBehavior =
+        new BpmnVariableMappingBehavior(expressionBehavior, zeebeState, variableBehavior);
     stateTransitionBehavior =
         new BpmnStateTransitionBehavior(
             streamWriter,

@@ -14,7 +14,7 @@ import io.zeebe.engine.processing.streamprocessor.CommandProcessor;
 import io.zeebe.engine.processing.streamprocessor.TypedRecord;
 import io.zeebe.engine.processing.streamprocessor.writers.TypedEventWriter;
 import io.zeebe.engine.processing.streamprocessor.writers.Writers;
-import io.zeebe.engine.processing.variable.VariableDocumentBehavior;
+import io.zeebe.engine.processing.variable.VariableBehavior;
 import io.zeebe.engine.state.KeyGenerator;
 import io.zeebe.engine.state.deployment.DeployedWorkflow;
 import io.zeebe.engine.state.immutable.WorkflowState;
@@ -51,7 +51,7 @@ public final class CreateWorkflowInstanceProcessor
   private final WorkflowInstanceRecord newWorkflowInstance = new WorkflowInstanceRecord();
   private final WorkflowState workflowState;
   private final MutableElementInstanceState elementInstanceState;
-  private final VariableDocumentBehavior variableDocumentBehavior;
+  private final VariableBehavior variableBehavior;
   private final KeyGenerator keyGenerator;
   private final TypedEventWriter eventWriter;
 
@@ -63,7 +63,7 @@ public final class CreateWorkflowInstanceProcessor
       final Writers writers) {
     this.workflowState = workflowState;
     this.elementInstanceState = elementInstanceState;
-    variableDocumentBehavior = new VariableDocumentBehavior(variablesState);
+    variableBehavior = new VariableBehavior(variablesState, writers.state(), keyGenerator);
     this.keyGenerator = keyGenerator;
     eventWriter = writers.events();
   }
@@ -115,8 +115,8 @@ public final class CreateWorkflowInstanceProcessor
       final long workflowKey,
       final long workflowInstanceKey) {
     try {
-      variableDocumentBehavior.mergeLocalDocument(
-          workflowInstanceKey, workflowKey, record.getVariablesBuffer());
+      variableBehavior.mergeLocalDocument(
+          workflowInstanceKey, workflowKey, workflowInstanceKey, record.getVariablesBuffer());
     } catch (final MsgpackReaderException e) {
       Loggers.WORKFLOW_PROCESSOR_LOGGER.error(ERROR_INVALID_VARIABLES_LOGGED_MESSAGE, e);
       controller.reject(
