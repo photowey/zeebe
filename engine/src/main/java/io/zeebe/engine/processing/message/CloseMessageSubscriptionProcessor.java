@@ -67,8 +67,8 @@ public final class CloseMessageSubscriptionProcessor
   }
 
   private boolean sendAcknowledgeCommand() {
-    return commandSender.closeWorkflowInstanceSubscription(
-        subscriptionRecord.getWorkflowInstanceKey(),
+    return commandSender.closeProcessInstanceSubscription(
+        subscriptionRecord.getProcessInstanceKey(),
         subscriptionRecord.getElementInstanceKey(),
         subscriptionRecord.getMessageNameBuffer());
   }

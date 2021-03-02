@@ -15,15 +15,15 @@ import io.zeebe.engine.processing.deployment.model.BpmnFactory;
 import io.zeebe.engine.processing.streamprocessor.writers.StateWriter;
 import io.zeebe.engine.state.KeyGenerator;
 import io.zeebe.engine.state.ZeebeState;
-import io.zeebe.engine.state.deployment.DeployedWorkflow;
-import io.zeebe.engine.state.mutable.MutableWorkflowState;
+import io.zeebe.engine.state.deployment.DeployedProcess;
+import io.zeebe.engine.state.mutable.MutableProcessState;
 import io.zeebe.model.bpmn.Bpmn;
 import io.zeebe.model.bpmn.BpmnModelInstance;
 import io.zeebe.model.bpmn.instance.Process;
 import io.zeebe.protocol.impl.record.value.deployment.DeploymentRecord;
 import io.zeebe.protocol.impl.record.value.deployment.DeploymentResource;
 import io.zeebe.protocol.record.RejectionType;
-import io.zeebe.protocol.record.intent.WorkflowIntent;
+import io.zeebe.protocol.record.intent.ProcessIntent;
 import io.zeebe.util.buffer.BufferUtil;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -38,10 +38,10 @@ import org.slf4j.Logger;
 
 public final class DeploymentTransformer {
 
-  private static final Logger LOG = Loggers.WORKFLOW_PROCESSOR_LOGGER;
+  private static final Logger LOG = Loggers.PROCESS_PROCESSOR_LOGGER;
 
   private final BpmnValidator validator;
-  private final MutableWorkflowState workflowState;
+  private final MutableProcessState processState;
   private final KeyGenerator keyGenerator;
   private final MessageDigest digestGenerator;
   // process id duplicate checking
@@ -56,7 +56,7 @@ public final class DeploymentTransformer {
       final ZeebeState zeebeState,
       final ExpressionProcessor expressionProcessor) {
     this.stateWriter = stateWriter;
-    workflowState = zeebeState.getWorkflowState();
+    processState = zeebeState.getProcessState();
     keyGenerator = zeebeState.getKeyGenerator();
     validator = BpmnFactory.createValidator(expressionProcessor);
 
@@ -108,7 +108,7 @@ public final class DeploymentTransformer {
     final String resourceName = deploymentResource.getResourceName();
 
     try {
-      final BpmnModelInstance definition = readWorkflowDefinition(deploymentResource);
+      final BpmnModelInstance definition = readProcessDefinition(deploymentResource);
       final String validationError = validator.validate(definition);
 
       if (validationError == null) {
@@ -118,7 +118,7 @@ public final class DeploymentTransformer {
         final String bpmnIdDuplicateError = checkForDuplicateBpmnId(definition, resourceName);
 
         if (bpmnIdDuplicateError == null) {
-          transformWorkflowResource(deploymentEvent, deploymentResource, definition);
+          transformProcessResource(deploymentEvent, deploymentResource, definition);
           success = true;
         } else {
           errors.append("\n").append(bpmnIdDuplicateError);
@@ -151,48 +151,48 @@ public final class DeploymentTransformer {
     return null;
   }
 
-  private void transformWorkflowResource(
+  private void transformProcessResource(
       final DeploymentRecord deploymentEvent,
       final DeploymentResource deploymentResource,
       final BpmnModelInstance definition) {
     final Collection<Process> processes =
         definition.getDefinitions().getChildElementsByType(Process.class);
 
-    for (final Process workflow : processes) {
-      if (workflow.isExecutable()) {
-        final String bpmnProcessId = workflow.getId();
-        final DeployedWorkflow lastWorkflow =
-            workflowState.getLatestWorkflowVersionByProcessId(BufferUtil.wrapString(bpmnProcessId));
-        final long workflowKey;
+    for (final Process process : processes) {
+      if (process.isExecutable()) {
+        final String bpmnProcessId = process.getId();
+        final DeployedProcess lastProcess =
+            processState.getLatestProcessVersionByProcessId(BufferUtil.wrapString(bpmnProcessId));
+        final long processKey;
         final int version;
 
         final DirectBuffer lastDigest =
-            workflowState.getLatestVersionDigest(wrapString(bpmnProcessId));
+            processState.getLatestVersionDigest(wrapString(bpmnProcessId));
         final DirectBuffer resourceDigest =
             new UnsafeBuffer(digestGenerator.digest(deploymentResource.getResource()));
 
-        if (isDuplicateOfLatest(deploymentResource, resourceDigest, lastWorkflow, lastDigest)) {
-          workflowKey = lastWorkflow.getKey();
-          version = lastWorkflow.getVersion();
+        if (isDuplicateOfLatest(deploymentResource, resourceDigest, lastProcess, lastDigest)) {
+          processKey = lastProcess.getKey();
+          version = lastProcess.getVersion();
         } else {
-          workflowKey = keyGenerator.nextKey();
+          processKey = keyGenerator.nextKey();
           // TODO(zell): after migrating all deployment processors to new event sourcing model we
           // can remove this from here
           // we should then get here the next version, but not changing the state
-          version = workflowState.incrementAndGetWorkflowVersion(bpmnProcessId);
-          workflowState.putLatestVersionDigest(wrapString(bpmnProcessId), resourceDigest);
+          version = processState.incrementAndGetProcessVersion(bpmnProcessId);
+          processState.putLatestVersionDigest(wrapString(bpmnProcessId), resourceDigest);
         }
 
-        final var workflowRecord = deploymentEvent.workflows().add();
-        workflowRecord
-            .setBpmnProcessId(BufferUtil.wrapString(workflow.getId()))
+        final var processRecord = deploymentEvent.processes().add();
+        processRecord
+            .setBpmnProcessId(BufferUtil.wrapString(process.getId()))
             .setVersion(version)
-            .setKey(workflowKey)
+            .setKey(processKey)
             .setChecksum(resourceDigest)
             .setResourceName(deploymentResource.getResourceNameBuffer())
             .setResource(deploymentResource.getResourceBuffer());
 
-        stateWriter.appendFollowUpEvent(workflowKey, WorkflowIntent.CREATED, workflowRecord);
+        stateWriter.appendFollowUpEvent(processKey, ProcessIntent.CREATED, processRecord);
       }
     }
   }
@@ -200,15 +200,15 @@ public final class DeploymentTransformer {
   private boolean isDuplicateOfLatest(
       final DeploymentResource deploymentResource,
       final DirectBuffer resourceDigest,
-      final DeployedWorkflow lastWorkflow,
+      final DeployedProcess lastProcess,
       final DirectBuffer lastVersionDigest) {
     return lastVersionDigest != null
-        && lastWorkflow != null
+        && lastProcess != null
         && lastVersionDigest.equals(resourceDigest)
-        && lastWorkflow.getResourceName().equals(deploymentResource.getResourceNameBuffer());
+        && lastProcess.getResourceName().equals(deploymentResource.getResourceNameBuffer());
   }
 
-  private BpmnModelInstance readWorkflowDefinition(final DeploymentResource deploymentResource) {
+  private BpmnModelInstance readProcessDefinition(final DeploymentResource deploymentResource) {
     final DirectBuffer resource = deploymentResource.getResourceBuffer();
     final DirectBufferInputStream resourceStream = new DirectBufferInputStream(resource);
     return Bpmn.readModelFromStream(resourceStream);

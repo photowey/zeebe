@@ -16,7 +16,7 @@ import io.zeebe.model.bpmn.Bpmn;
 import io.zeebe.protocol.record.intent.IncidentIntent;
 import io.zeebe.protocol.record.intent.JobIntent;
 import io.zeebe.protocol.record.intent.MessageStartEventSubscriptionIntent;
-import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
+import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
 import io.zeebe.protocol.record.value.BpmnElementType;
 import io.zeebe.test.util.record.RecordingExporter;
 import java.time.Duration;
@@ -29,19 +29,19 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-public final class WorkflowExecutionCleanStateTest {
+public final class ProcessExecutionCleanStateTest {
 
-  private static final String PROCESS_ID = "workflow";
+  private static final String PROCESS_ID = "process";
 
   private static final List<ZbColumnFamilies> IGNORE_NON_EMPTY_COLUMNS =
       List.of(
           ZbColumnFamilies.DEFAULT,
           ZbColumnFamilies.KEY,
-          ZbColumnFamilies.WORKFLOW_VERSION,
-          ZbColumnFamilies.WORKFLOW_CACHE,
-          ZbColumnFamilies.WORKFLOW_CACHE_BY_ID_AND_VERSION,
-          ZbColumnFamilies.WORKFLOW_CACHE_LATEST_KEY,
-          ZbColumnFamilies.WORKFLOW_CACHE_DIGEST_BY_ID);
+          ZbColumnFamilies.PROCESS_VERSION,
+          ZbColumnFamilies.PROCESS_CACHE,
+          ZbColumnFamilies.PROCESS_CACHE_BY_ID_AND_VERSION,
+          ZbColumnFamilies.PROCESS_CACHE_LATEST_KEY,
+          ZbColumnFamilies.PROCESS_CACHE_DIGEST_BY_ID);
 
   @Rule public EngineRule engineRule = EngineRule.singlePartition();
 
@@ -55,7 +55,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithServiceTask() {
+  public void testProcessWithServiceTask() {
     // given
     engineRule
         .deployment()
@@ -68,18 +68,18 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
 
     engineRule
         .job()
-        .ofInstance(workflowInstanceKey)
+        .ofInstance(processInstanceKey)
         .withType("test")
         .withVariable("y", 2)
         .complete();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -88,7 +88,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithSubprocess() {
+  public void testProcessWithSubprocess() {
     // given
     engineRule
         .deployment()
@@ -109,11 +109,11 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -122,7 +122,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithMultiInstance() {
+  public void testProcessWithMultiInstance() {
     // given
     engineRule
         .deployment()
@@ -144,22 +144,22 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
+    final var processInstanceKey =
         engineRule
-            .workflowInstance()
+            .processInstance()
             .ofBpmnProcessId(PROCESS_ID)
             .withVariable("items", List.of(1))
             .create();
 
     engineRule
         .job()
-        .ofInstance(workflowInstanceKey)
+        .ofInstance(processInstanceKey)
         .withType("test")
         .withVariable("result", 2)
         .complete();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -168,7 +168,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithTimerEvent() {
+  public void testProcessWithTimerEvent() {
     // given
     engineRule
         .deployment()
@@ -181,11 +181,11 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -194,7 +194,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithMessageEvent() {
+  public void testProcessWithMessageEvent() {
     // given
     engineRule
         .deployment()
@@ -210,9 +210,9 @@ public final class WorkflowExecutionCleanStateTest {
                 .done())
         .deploy();
 
-    final var workflowInstanceKey =
+    final var processInstanceKey =
         engineRule
-            .workflowInstance()
+            .processInstance()
             .ofBpmnProcessId(PROCESS_ID)
             .withVariable("key", "key-1")
             .create();
@@ -227,8 +227,8 @@ public final class WorkflowExecutionCleanStateTest {
         .withVariables(Map.of("x", 1))
         .publish();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -239,7 +239,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithMessageStartEvent() {
+  public void testProcessWithMessageStartEvent() {
     // given
     final var deployment =
         engineRule
@@ -253,7 +253,7 @@ public final class WorkflowExecutionCleanStateTest {
                     .done())
             .deploy();
 
-    final var workflowKey = deployment.getValue().getDeployedWorkflows().get(0).getWorkflowKey();
+    final var processKey = deployment.getValue().getDeployedProcesses().get(0).getProcessKey();
 
     // when
     final var timeToLive = Duration.ofSeconds(10);
@@ -266,21 +266,21 @@ public final class WorkflowExecutionCleanStateTest {
             .withVariables(Map.of("x", 1))
             .publish();
 
-    final var workflowInstanceKey =
-        RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_ACTIVATING)
-            .withWorkflowKey(workflowKey)
+    final var processInstanceKey =
+        RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_ACTIVATING)
+            .withProcessKey(processKey)
             .withElementType(BpmnElementType.PROCESS)
             .getFirst()
             .getKey();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
     engineRule.increaseTime(timeToLive.plus(MessageObserver.MESSAGE_TIME_TO_LIVE_CHECK_INTERVAL));
 
-    // deploy new workflow without message start event to close the open subscription
+    // deploy new process without message start event to close the open subscription
     engineRule
         .deployment()
         .withXmlResource(Bpmn.createExecutableProcess(PROCESS_ID).startEvent().endEvent().done())
@@ -288,7 +288,7 @@ public final class WorkflowExecutionCleanStateTest {
 
     RecordingExporter.messageStartEventSubscriptionRecords(
             MessageStartEventSubscriptionIntent.CLOSED)
-        .withWorkfloKey(workflowKey)
+        .withWorkfloKey(processKey)
         .await();
 
     // then
@@ -296,7 +296,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithErrorEvent() {
+  public void testProcessWithErrorEvent() {
     // given
     engineRule
         .deployment()
@@ -309,19 +309,19 @@ public final class WorkflowExecutionCleanStateTest {
                 .done())
         .deploy();
 
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
 
     // when
     engineRule
         .job()
-        .ofInstance(workflowInstanceKey)
+        .ofInstance(processInstanceKey)
         .withType("test")
         .withErrorCode("ERROR")
         .throwError();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -330,7 +330,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithIncident() {
+  public void testProcessWithIncident() {
     // given
     engineRule
         .deployment()
@@ -342,34 +342,34 @@ public final class WorkflowExecutionCleanStateTest {
                 .done())
         .deploy();
 
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
 
     // when
-    engineRule.job().ofInstance(workflowInstanceKey).withType("test").withRetries(0).fail();
+    engineRule.job().ofInstance(processInstanceKey).withType("test").withRetries(0).fail();
 
     final var incidentCreated =
         RecordingExporter.incidentRecords(IncidentIntent.CREATED)
-            .withWorkflowInstanceKey(workflowInstanceKey)
+            .withProcessInstanceKey(processInstanceKey)
             .getFirst();
 
     engineRule.job().withKey(incidentCreated.getValue().getJobKey()).withRetries(1).updateRetries();
 
     engineRule
         .incident()
-        .ofInstance(workflowInstanceKey)
+        .ofInstance(processInstanceKey)
         .withKey(incidentCreated.getKey())
         .resolve();
 
     engineRule
         .job()
-        .ofInstance(workflowInstanceKey)
+        .ofInstance(processInstanceKey)
         .withType("test")
         .withVariable("y", 2)
         .complete();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -378,7 +378,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithExclusiveGateway() {
+  public void testProcessWithExclusiveGateway() {
     // given
     engineRule
         .deployment()
@@ -397,11 +397,11 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -410,7 +410,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithParallelGateway() {
+  public void testProcessWithParallelGateway() {
     // given
     engineRule
         .deployment()
@@ -425,11 +425,11 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -438,7 +438,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithEventBasedGateway() {
+  public void testProcessWithEventBasedGateway() {
     // given
     engineRule
         .deployment()
@@ -457,15 +457,15 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
+    final var processInstanceKey =
         engineRule
-            .workflowInstance()
+            .processInstance()
             .ofBpmnProcessId(PROCESS_ID)
             .withVariable("key", "key-1")
             .create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -474,7 +474,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithEventSubprocess() {
+  public void testProcessWithEventSubprocess() {
     // given
     engineRule
         .deployment()
@@ -495,11 +495,11 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -508,10 +508,10 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowWithCallActivity() {
+  public void testProcessWithCallActivity() {
     // given
-    final var childWorkflow = Bpmn.createExecutableProcess("child").startEvent().endEvent().done();
-    final var parentWorkflow =
+    final var childProcess = Bpmn.createExecutableProcess("child").startEvent().endEvent().done();
+    final var parentProcess =
         Bpmn.createExecutableProcess(PROCESS_ID)
             .startEvent()
             .callActivity("call", c -> c.zeebeProcessId("child"))
@@ -520,16 +520,16 @@ public final class WorkflowExecutionCleanStateTest {
 
     engineRule
         .deployment()
-        .withXmlResource("child.bpmn", childWorkflow)
-        .withXmlResource("parent.bpmn", parentWorkflow)
+        .withXmlResource("child.bpmn", childProcess)
+        .withXmlResource("parent.bpmn", parentProcess)
         .deploy();
 
     // when
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -538,7 +538,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowCreatedWithResult() {
+  public void testProcessCreatedWithResult() {
     // given
     engineRule
         .deployment()
@@ -546,16 +546,16 @@ public final class WorkflowExecutionCleanStateTest {
         .deploy();
 
     // when
-    final var workflowInstanceKey =
+    final var processInstanceKey =
         engineRule
-            .workflowInstance()
+            .processInstance()
             .ofBpmnProcessId(PROCESS_ID)
             .withVariable("x", 1)
             .withResult()
             .create();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_COMPLETED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_COMPLETED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 
@@ -564,7 +564,7 @@ public final class WorkflowExecutionCleanStateTest {
   }
 
   @Test
-  public void testWorkflowCanceled() {
+  public void testProcessCanceled() {
     // given
     engineRule
         .deployment()
@@ -576,18 +576,18 @@ public final class WorkflowExecutionCleanStateTest {
                 .done())
         .deploy();
 
-    final var workflowInstanceKey =
-        engineRule.workflowInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
+    final var processInstanceKey =
+        engineRule.processInstance().ofBpmnProcessId(PROCESS_ID).withVariable("x", 1).create();
 
     RecordingExporter.jobRecords(JobIntent.CREATED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+        .withProcessInstanceKey(processInstanceKey)
         .await();
 
     // when
-    engineRule.workflowInstance().withInstanceKey(workflowInstanceKey).cancel();
+    engineRule.processInstance().withInstanceKey(processInstanceKey).cancel();
 
-    RecordingExporter.workflowInstanceRecords(WorkflowInstanceIntent.ELEMENT_TERMINATED)
-        .withWorkflowInstanceKey(workflowInstanceKey)
+    RecordingExporter.processInstanceRecords(ProcessInstanceIntent.ELEMENT_TERMINATED)
+        .withProcessInstanceKey(processInstanceKey)
         .withElementType(BpmnElementType.PROCESS)
         .await();
 

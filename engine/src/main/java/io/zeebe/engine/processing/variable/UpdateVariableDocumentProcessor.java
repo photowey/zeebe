@@ -47,9 +47,9 @@ public final class UpdateVariableDocumentProcessor
       return true;
     }
 
-    final long workflowKey = scope.getValue().getWorkflowKey();
+    final long processKey = scope.getValue().getProcessKey();
 
-    if (mergeDocument(record, workflowKey, controller)) {
+    if (mergeDocument(record, processKey, controller)) {
       controller.accept(VariableDocumentIntent.UPDATED, record);
     }
     return true;
@@ -57,14 +57,14 @@ public final class UpdateVariableDocumentProcessor
 
   private boolean mergeDocument(
       final VariableDocumentRecord record,
-      final long workflowKey,
+      final long processKey,
       final CommandControl<VariableDocumentRecord> controller) {
     try {
       getUpdateOperation(record.getUpdateSemantics())
-          .apply(record.getScopeKey(), workflowKey, record.getVariablesBuffer());
+          .apply(record.getScopeKey(), processKey, record.getVariablesBuffer());
       return true;
     } catch (final MsgpackReaderException e) {
-      Loggers.WORKFLOW_PROCESSOR_LOGGER.error(
+      Loggers.PROCESS_PROCESSOR_LOGGER.error(
           "Expected to merge variable document for scope '{}', but its document could not be read",
           record.getScopeKey(),
           e);
@@ -90,6 +90,6 @@ public final class UpdateVariableDocumentProcessor
 
   @FunctionalInterface
   private interface UpdateOperation {
-    void apply(long scopeKey, long workflowKey, DirectBuffer variables);
+    void apply(long scopeKey, long processKey, DirectBuffer variables);
   }
 }

@@ -35,11 +35,11 @@ public final class CloseMessageStartEventSubscriptionProcessor
       final TypedResponseWriter responseWriter,
       final TypedStreamWriter streamWriter) {
     final MessageStartEventSubscriptionRecord subscriptionRecord = record.getValue();
-    final long workflowKey = subscriptionRecord.getWorkflowKey();
+    final long processKey = subscriptionRecord.getProcessKey();
 
-    subscriptionState.removeSubscriptionsOfWorkflow(workflowKey);
+    subscriptionState.removeSubscriptionsOfProcess(processKey);
 
-    eventScopeInstanceState.deleteInstance(workflowKey);
+    eventScopeInstanceState.deleteInstance(processKey);
 
     streamWriter.appendFollowUpEvent(
         record.getKey(), MessageStartEventSubscriptionIntent.CLOSED, subscriptionRecord);

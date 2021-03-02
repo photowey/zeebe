@@ -18,10 +18,10 @@ import io.zeebe.engine.state.instance.ElementInstance;
 import io.zeebe.engine.state.mutable.MutableElementInstanceState;
 import io.zeebe.engine.state.mutable.MutableVariableState;
 import io.zeebe.protocol.impl.record.value.variable.VariableDocumentRecord;
-import io.zeebe.protocol.impl.record.value.workflowinstance.WorkflowInstanceRecord;
+import io.zeebe.protocol.impl.record.value.processinstance.ProcessInstanceRecord;
 import io.zeebe.protocol.record.RejectionType;
 import io.zeebe.protocol.record.intent.VariableDocumentIntent;
-import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
+import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
 import io.zeebe.protocol.record.value.VariableDocumentUpdateSemantic;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -36,7 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public final class UpdateVariableDocumentProcessorTest
     extends CommandProcessorTestCase<VariableDocumentRecord> {
 
-  public static final int WORKFLOW_KEY = -1;
+  public static final int PROCESS_KEY = -1;
 
   private MutableElementInstanceState elementInstanceState;
   private MutableVariableState variablesState;
@@ -102,7 +102,7 @@ public final class UpdateVariableDocumentProcessorTest
 
     // then
     verify(variablesState, times(1))
-        .setVariablesFromDocument(instance.getKey(), WORKFLOW_KEY, variables);
+        .setVariablesFromDocument(instance.getKey(), PROCESS_KEY, variables);
   }
 
   @Test
@@ -122,7 +122,7 @@ public final class UpdateVariableDocumentProcessorTest
 
     // then
     verify(variablesState, times(1))
-        .setVariablesLocalFromDocument(instance.getKey(), WORKFLOW_KEY, variables);
+        .setVariablesLocalFromDocument(instance.getKey(), PROCESS_KEY, variables);
   }
 
   @Test
@@ -147,6 +147,6 @@ public final class UpdateVariableDocumentProcessorTest
 
   private ElementInstance newElementInstance() {
     return elementInstanceState.newInstance(
-        1, new WorkflowInstanceRecord(), WorkflowInstanceIntent.ELEMENT_ACTIVATED);
+        1, new ProcessInstanceRecord(), ProcessInstanceIntent.ELEMENT_ACTIVATED);
   }
 }

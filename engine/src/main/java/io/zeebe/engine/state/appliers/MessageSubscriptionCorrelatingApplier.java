@@ -32,7 +32,7 @@ public final class MessageSubscriptionCorrelatingApplier
   public void applyState(final long key, final MessageSubscriptionRecord value) {
     final var subscription =
         new MessageSubscription(
-            value.getWorkflowInstanceKey(),
+            value.getProcessInstanceKey(),
             value.getElementInstanceKey(),
             value.getBpmnProcessIdBuffer(),
             value.getMessageNameBuffer(),
@@ -44,7 +44,7 @@ public final class MessageSubscriptionCorrelatingApplier
     messageSubscriptionState.updateToCorrelatingState(
         subscription, value.getVariablesBuffer(), sentTime, value.getMessageKey());
 
-    // avoid correlating this message to one instance of this workflow again
+    // avoid correlating this message to one instance of this process again
     messageState.putMessageCorrelation(value.getMessageKey(), value.getBpmnProcessIdBuffer());
   }
 }

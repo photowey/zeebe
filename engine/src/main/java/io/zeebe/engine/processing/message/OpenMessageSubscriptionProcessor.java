@@ -74,7 +74,7 @@ public final class OpenMessageSubscriptionProcessor
       final Consumer<SideEffectProducer> sideEffect) {
     final MessageSubscription subscription =
         new MessageSubscription(
-            subscriptionRecord.getWorkflowInstanceKey(),
+            subscriptionRecord.getProcessInstanceKey(),
             subscriptionRecord.getElementInstanceKey(),
             subscriptionRecord.getBpmnProcessIdBuffer(),
             subscriptionRecord.getMessageNameBuffer(),
@@ -91,8 +91,8 @@ public final class OpenMessageSubscriptionProcessor
   }
 
   private boolean sendAcknowledgeCommand() {
-    return commandSender.openWorkflowInstanceSubscription(
-        subscriptionRecord.getWorkflowInstanceKey(),
+    return commandSender.openProcessInstanceSubscription(
+        subscriptionRecord.getProcessInstanceKey(),
         subscriptionRecord.getElementInstanceKey(),
         subscriptionRecord.getMessageNameBuffer(),
         subscriptionRecord.shouldCloseOnCorrelate());

@@ -50,7 +50,7 @@ public final class RejectMessageCorrelationProcessor
 
     final MessageSubscriptionRecord subscriptionRecord = record.getValue();
     final long messageKey = subscriptionRecord.getMessageKey();
-    final long workflowInstanceKey = subscriptionRecord.getWorkflowInstanceKey();
+    final long processInstanceKey = subscriptionRecord.getProcessInstanceKey();
     final DirectBuffer bpmnProcessId = subscriptionRecord.getBpmnProcessIdBuffer();
 
     if (!messageState.existMessageCorrelation(messageKey, bpmnProcessId)) {
@@ -58,7 +58,7 @@ public final class RejectMessageCorrelationProcessor
           record,
           RejectionType.INVALID_STATE,
           String.format(
-              "Expected message '%d' to be correlated for workflow with BPMN process id '%s' but no correlation was found",
+              "Expected message '%d' to be correlated for process with BPMN process id '%s' but no correlation was found",
               messageKey, subscriptionRecord.getBpmnProcessId()));
       return;
     }
@@ -114,8 +114,8 @@ public final class RejectMessageCorrelationProcessor
   }
 
   private boolean sendCorrelateCommand() {
-    return commandSender.correlateWorkflowInstanceSubscription(
-        subscription.getWorkflowInstanceKey(),
+    return commandSender.correlateProcessInstanceSubscription(
+        subscription.getProcessInstanceKey(),
         subscription.getElementInstanceKey(),
         subscription.getBpmnProcessId(),
         subscription.getMessageName(),

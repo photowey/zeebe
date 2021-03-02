@@ -24,37 +24,37 @@ public final class DbMessageStartEventSubscriptionState
     implements MutableMessageStartEventSubscriptionState {
 
   private final DbString messageName;
-  private final DbLong workflowKey;
+  private final DbLong processKey;
 
-  // (messageName, workflowKey => MessageSubscription)
-  private final DbCompositeKey<DbString, DbLong> messageNameAndWorkflowKey;
+  // (messageName, processKey => MessageSubscription)
+  private final DbCompositeKey<DbString, DbLong> messageNameAndProcessKey;
   private final ColumnFamily<DbCompositeKey<DbString, DbLong>, SubscriptionValue>
       subscriptionsColumnFamily;
   private final SubscriptionValue subscriptionValue = new SubscriptionValue();
 
-  // (workflowKey, messageName) => \0  : to find existing subscriptions of a workflow
-  private final DbCompositeKey<DbLong, DbString> workflowKeyAndMessageName;
+  // (processKey, messageName) => \0  : to find existing subscriptions of a process
+  private final DbCompositeKey<DbLong, DbString> processKeyAndMessageName;
   private final ColumnFamily<DbCompositeKey<DbLong, DbString>, DbNil>
-      subscriptionsOfWorkflowKeyColumnFamily;
+      subscriptionsOfProcessKeyColumnFamily;
 
   public DbMessageStartEventSubscriptionState(
       final ZeebeDb<ZbColumnFamilies> zeebeDb, final TransactionContext transactionContext) {
     messageName = new DbString();
-    workflowKey = new DbLong();
-    messageNameAndWorkflowKey = new DbCompositeKey<>(messageName, workflowKey);
+    processKey = new DbLong();
+    messageNameAndProcessKey = new DbCompositeKey<>(messageName, processKey);
     subscriptionsColumnFamily =
         zeebeDb.createColumnFamily(
             ZbColumnFamilies.MESSAGE_START_EVENT_SUBSCRIPTION_BY_NAME_AND_KEY,
             transactionContext,
-            messageNameAndWorkflowKey,
+            messageNameAndProcessKey,
             subscriptionValue);
 
-    workflowKeyAndMessageName = new DbCompositeKey<>(workflowKey, messageName);
-    subscriptionsOfWorkflowKeyColumnFamily =
+    processKeyAndMessageName = new DbCompositeKey<>(processKey, messageName);
+    subscriptionsOfProcessKeyColumnFamily =
         zeebeDb.createColumnFamily(
             ZbColumnFamilies.MESSAGE_START_EVENT_SUBSCRIPTION_BY_KEY_AND_NAME,
             transactionContext,
-            workflowKeyAndMessageName,
+            processKeyAndMessageName,
             DbNil.INSTANCE);
   }
 
@@ -63,29 +63,29 @@ public final class DbMessageStartEventSubscriptionState
     subscriptionValue.set(subscription);
 
     messageName.wrapBuffer(subscription.getMessageNameBuffer());
-    workflowKey.wrapLong(subscription.getWorkflowKey());
-    subscriptionsColumnFamily.put(messageNameAndWorkflowKey, subscriptionValue);
-    subscriptionsOfWorkflowKeyColumnFamily.put(workflowKeyAndMessageName, DbNil.INSTANCE);
+    processKey.wrapLong(subscription.getProcessKey());
+    subscriptionsColumnFamily.put(messageNameAndProcessKey, subscriptionValue);
+    subscriptionsOfProcessKeyColumnFamily.put(processKeyAndMessageName, DbNil.INSTANCE);
   }
 
   @Override
-  public void removeSubscriptionsOfWorkflow(final long workflowKey) {
-    this.workflowKey.wrapLong(workflowKey);
+  public void removeSubscriptionsOfProcess(final long processKey) {
+    this.processKey.wrapLong(processKey);
 
-    subscriptionsOfWorkflowKeyColumnFamily.whileEqualPrefix(
-        this.workflowKey,
+    subscriptionsOfProcessKeyColumnFamily.whileEqualPrefix(
+        this.processKey,
         (key, value) -> {
-          subscriptionsColumnFamily.delete(messageNameAndWorkflowKey);
-          subscriptionsOfWorkflowKeyColumnFamily.delete(key);
+          subscriptionsColumnFamily.delete(messageNameAndProcessKey);
+          subscriptionsOfProcessKeyColumnFamily.delete(key);
         });
   }
 
   @Override
   public boolean exists(final MessageStartEventSubscriptionRecord subscription) {
     messageName.wrapBuffer(subscription.getMessageNameBuffer());
-    workflowKey.wrapLong(subscription.getWorkflowKey());
+    processKey.wrapLong(subscription.getProcessKey());
 
-    return subscriptionsColumnFamily.exists(messageNameAndWorkflowKey);
+    return subscriptionsColumnFamily.exists(messageNameAndProcessKey);
   }
 
   @Override

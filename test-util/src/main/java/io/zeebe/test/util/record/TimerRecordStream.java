@@ -46,11 +46,11 @@ public final class TimerRecordStream
     return valueFilter(v -> v.getRepetitions() == repetitions);
   }
 
-  public TimerRecordStream withWorkflowKey(final long workflowKey) {
-    return valueFilter(v -> v.getWorkflowKey() == workflowKey);
+  public TimerRecordStream withProcessKey(final long processKey) {
+    return valueFilter(v -> v.getProcessKey() == processKey);
   }
 
-  public TimerRecordStream withWorkflowInstanceKey(final long workflowInstanceKey) {
-    return valueFilter(v -> v.getWorkflowInstanceKey() == workflowInstanceKey);
+  public TimerRecordStream withProcessInstanceKey(final long processInstanceKey) {
+    return valueFilter(v -> v.getProcessInstanceKey() == processInstanceKey);
   }
 }

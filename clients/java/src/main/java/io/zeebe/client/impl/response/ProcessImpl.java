@@ -15,31 +15,31 @@
  */
 package io.zeebe.client.impl.response;
 
-import io.zeebe.client.api.response.Workflow;
-import io.zeebe.gateway.protocol.GatewayOuterClass.WorkflowMetadata;
+import io.zeebe.client.api.response.Process;
+import io.zeebe.gateway.protocol.GatewayOuterClass.ProcessMetadata;
 import java.util.Objects;
 
-public final class WorkflowImpl implements Workflow {
+public final class ProcessImpl implements Process {
 
-  private final long workflowKey;
+  private final long processKey;
   private final String bpmnProcessId;
   private final int version;
   private final String resourceName;
 
-  public WorkflowImpl(final WorkflowMetadata workflow) {
+  public ProcessImpl(final ProcessMetadata process) {
     this(
-        workflow.getWorkflowKey(),
-        workflow.getBpmnProcessId(),
-        workflow.getVersion(),
-        workflow.getResourceName());
+        process.getProcessKey(),
+        process.getBpmnProcessId(),
+        process.getVersion(),
+        process.getResourceName());
   }
 
-  public WorkflowImpl(
-      final long workflowKey,
+  public ProcessImpl(
+      final long processKey,
       final String bpmnProcessId,
       final int version,
       final String resourceName) {
-    this.workflowKey = workflowKey;
+    this.processKey = processKey;
     this.bpmnProcessId = bpmnProcessId;
     this.version = version;
     this.resourceName = resourceName;
@@ -56,8 +56,8 @@ public final class WorkflowImpl implements Workflow {
   }
 
   @Override
-  public long getWorkflowKey() {
-    return workflowKey;
+  public long getProcessKey() {
+    return processKey;
   }
 
   @Override
@@ -67,7 +67,7 @@ public final class WorkflowImpl implements Workflow {
 
   @Override
   public int hashCode() {
-    return Objects.hash(workflowKey, bpmnProcessId, version, resourceName);
+    return Objects.hash(processKey, bpmnProcessId, version, resourceName);
   }
 
   @Override
@@ -78,18 +78,18 @@ public final class WorkflowImpl implements Workflow {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final WorkflowImpl workflow = (WorkflowImpl) o;
-    return workflowKey == workflow.workflowKey
-        && version == workflow.version
-        && Objects.equals(bpmnProcessId, workflow.bpmnProcessId)
-        && Objects.equals(resourceName, workflow.resourceName);
+    final ProcessImpl process = (ProcessImpl) o;
+    return processKey == process.processKey
+        && version == process.version
+        && Objects.equals(bpmnProcessId, process.bpmnProcessId)
+        && Objects.equals(resourceName, process.resourceName);
   }
 
   @Override
   public String toString() {
-    return "WorkflowImpl{"
-        + "workflowKey="
-        + workflowKey
+    return "ProcessImpl{"
+        + "processKey="
+        + processKey
         + ", bpmnProcessId='"
         + bpmnProcessId
         + '\''

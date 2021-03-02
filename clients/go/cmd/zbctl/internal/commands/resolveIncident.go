@@ -26,7 +26,7 @@ var (
 
 var resolveIncidentCommand = &cobra.Command{
 	Use:     "incident <key>",
-	Short:   "Resolve an existing incident of a workflow instance",
+	Short:   "Resolve an existing incident of a process instance",
 	Args:    keyArg(&incidentKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,7 +35,7 @@ var resolveIncidentCommand = &cobra.Command{
 
 		_, err := client.NewResolveIncidentCommand().IncidentKey(incidentKey).Send(ctx)
 		if err == nil {
-			log.Println("Resolved an incident of a workflow instance with key", incidentKey)
+			log.Println("Resolved an incident of a process instance with key", incidentKey)
 		}
 
 		return err

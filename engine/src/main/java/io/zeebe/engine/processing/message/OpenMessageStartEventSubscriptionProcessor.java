@@ -40,7 +40,7 @@ public final class OpenMessageStartEventSubscriptionProcessor
     subscriptionState.put(subscription);
 
     eventScopeInstanceState.createIfNotExists(
-        subscription.getWorkflowKey(), Collections.emptyList());
+        subscription.getProcessKey(), Collections.emptyList());
 
     streamWriter.appendFollowUpEvent(
         record.getKey(), MessageStartEventSubscriptionIntent.OPENED, subscription);

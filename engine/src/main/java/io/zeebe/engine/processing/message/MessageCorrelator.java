@@ -52,7 +52,7 @@ public final class MessageCorrelator {
   }
 
   private boolean correlateMessage(final StoredMessage storedMessage) {
-    // correlate the first message which is not correlated to the workflow instance yet
+    // correlate the first message which is not correlated to the process instance yet
     messageKey = storedMessage.getMessageKey();
     final var message = storedMessage.getMessage();
 
@@ -76,8 +76,8 @@ public final class MessageCorrelator {
   }
 
   private boolean sendCorrelateCommand() {
-    return commandSender.correlateWorkflowInstanceSubscription(
-        subscriptionRecord.getWorkflowInstanceKey(),
+    return commandSender.correlateProcessInstanceSubscription(
+        subscriptionRecord.getProcessInstanceKey(),
         subscriptionRecord.getElementInstanceKey(),
         subscriptionRecord.getBpmnProcessIdBuffer(),
         subscriptionRecord.getMessageNameBuffer(),

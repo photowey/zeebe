@@ -35,8 +35,8 @@ public final class PendingMessageSubscriptionChecker implements Runnable {
 
   private boolean sendCommand(final MessageSubscription subscription) {
     final boolean success =
-        commandSender.correlateWorkflowInstanceSubscription(
-            subscription.getWorkflowInstanceKey(),
+        commandSender.correlateProcessInstanceSubscription(
+            subscription.getProcessInstanceKey(),
             subscription.getElementInstanceKey(),
             subscription.getBpmnProcessId(),
             subscription.getMessageName(),

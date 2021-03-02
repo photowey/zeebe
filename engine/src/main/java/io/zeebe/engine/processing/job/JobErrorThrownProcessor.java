@@ -36,7 +36,7 @@ public class JobErrorThrownProcessor implements TypedRecordProcessor<JobRecord> 
     jobState = zeebeState.getJobState();
     errorEventHandler =
         new ErrorEventHandler(
-            zeebeState.getWorkflowState(),
+            zeebeState.getProcessState(),
             zeebeState.getElementInstanceState(),
             zeebeState.getEventScopeInstanceState(),
             zeebeState.getKeyGenerator());
@@ -96,8 +96,8 @@ public class JobErrorThrownProcessor implements TypedRecordProcessor<JobRecord> 
         .setErrorType(ErrorType.UNHANDLED_ERROR_EVENT)
         .setErrorMessage(incidentErrorMessage)
         .setBpmnProcessId(job.getBpmnProcessIdBuffer())
-        .setWorkflowKey(job.getWorkflowKey())
-        .setWorkflowInstanceKey(job.getWorkflowInstanceKey())
+        .setProcessKey(job.getProcessKey())
+        .setProcessInstanceKey(job.getProcessInstanceKey())
         .setElementId(job.getElementIdBuffer())
         .setElementInstanceKey(job.getElementInstanceKey())
         .setJobKey(key)

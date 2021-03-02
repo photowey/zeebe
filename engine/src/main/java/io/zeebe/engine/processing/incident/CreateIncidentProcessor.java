@@ -60,7 +60,7 @@ public final class CreateIncidentProcessor implements CommandProcessor<IncidentR
     if (isJobIncident) {
       return rejectJobIncident(incidentEvent.getJobKey(), commandControl);
     } else {
-      return rejectWorkflowInstanceIncident(incidentEvent.getElementInstanceKey(), commandControl);
+      return rejectProcessInstanceIncident(incidentEvent.getElementInstanceKey(), commandControl);
     }
   }
 
@@ -82,7 +82,7 @@ public final class CreateIncidentProcessor implements CommandProcessor<IncidentR
     return false;
   }
 
-  private boolean rejectWorkflowInstanceIncident(
+  private boolean rejectProcessInstanceIncident(
       final long elementInstanceKey, final CommandControl<IncidentRecord> commandControl) {
     final ElementInstanceState elementInstanceState = zeebeState.getElementInstanceState();
 

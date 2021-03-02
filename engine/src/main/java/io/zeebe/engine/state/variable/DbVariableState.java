@@ -103,42 +103,42 @@ public class DbVariableState implements MutableVariableState {
 
   @Override
   public void setVariablesLocalFromDocument(
-      final long scopeKey, final long workflowKey, final DirectBuffer document) {
+      final long scopeKey, final long processKey, final DirectBuffer document) {
     indexedDocument.index(document);
     if (indexedDocument.isEmpty()) {
       return;
     }
 
     for (final DocumentEntry entry : indexedDocument) {
-      setVariableLocal(scopeKey, workflowKey, entry.getName(), entry.getValue());
+      setVariableLocal(scopeKey, processKey, entry.getName(), entry.getValue());
     }
   }
 
   @Override
   public void setVariableLocal(
       final long scopeKey,
-      final long workflowKey,
+      final long processKey,
       final DirectBuffer name,
       final DirectBuffer value) {
-    setVariableLocal(scopeKey, workflowKey, name, 0, name.capacity(), value, 0, value.capacity());
+    setVariableLocal(scopeKey, processKey, name, 0, name.capacity(), value, 0, value.capacity());
   }
 
   @Override
   public void setVariableLocal(
       final long scopeKey,
-      final long workflowKey,
+      final long processKey,
       final DirectBuffer name,
       final DirectBuffer value,
       final int valueOffset,
       final int valueLength) {
     setVariableLocal(
-        scopeKey, workflowKey, name, 0, name.capacity(), value, valueOffset, valueLength);
+        scopeKey, processKey, name, 0, name.capacity(), value, valueOffset, valueLength);
   }
 
   @Override
   public void setVariableLocal(
       final long scopeKey,
-      final long workflowKey,
+      final long processKey,
       final DirectBuffer name,
       final int nameOffset,
       final int nameLength,
@@ -160,7 +160,7 @@ public class DbVariableState implements MutableVariableState {
         final long rootScopeKey = getRootScopeKey(scopeKey);
         listener.onCreate(
             newVariable.getKey(),
-            workflowKey,
+            processKey,
             variableName.getBuffer(),
             newVariable.getValue(),
             scopeKey,
@@ -175,7 +175,7 @@ public class DbVariableState implements MutableVariableState {
         final long rootScopeKey = getRootScopeKey(scopeKey);
         listener.onUpdate(
             newVariable.getKey(),
-            workflowKey,
+            processKey,
             variableName.getBuffer(),
             newVariable.getValue(),
             scopeKey,
@@ -189,7 +189,7 @@ public class DbVariableState implements MutableVariableState {
 
   @Override
   public void setVariablesFromDocument(
-      final long scopeKey, final long workflowKey, final DirectBuffer document) {
+      final long scopeKey, final long processKey, final DirectBuffer document) {
     indexedDocument.index(document);
     if (indexedDocument.isEmpty()) {
       return;
@@ -206,7 +206,7 @@ public class DbVariableState implements MutableVariableState {
         final boolean hasVariable = hasVariableLocal(currentScope, entry.getName());
 
         if (hasVariable) {
-          setVariableLocal(currentScope, workflowKey, entry.getName(), entry.getValue());
+          setVariableLocal(currentScope, processKey, entry.getName(), entry.getValue());
           entryIterator.remove();
         }
       }
@@ -214,7 +214,7 @@ public class DbVariableState implements MutableVariableState {
     }
 
     for (final DocumentEntry entry : indexedDocument) {
-      setVariableLocal(currentScope, workflowKey, entry.getName(), entry.getValue());
+      setVariableLocal(currentScope, processKey, entry.getName(), entry.getValue());
     }
   }
 
@@ -512,7 +512,7 @@ public class DbVariableState implements MutableVariableState {
 
     void onCreate(
         long key,
-        long workflowKey,
+        long processKey,
         DirectBuffer name,
         DirectBuffer value,
         long variableScopeKey,
@@ -520,7 +520,7 @@ public class DbVariableState implements MutableVariableState {
 
     void onUpdate(
         long key,
-        long workflowKey,
+        long processKey,
         DirectBuffer name,
         DirectBuffer value,
         long variableScopeKey,

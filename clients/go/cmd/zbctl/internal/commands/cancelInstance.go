@@ -23,20 +23,20 @@ var cancelInstanceKey int64
 
 var cancelInstanceCmd = &cobra.Command{
 	Use:     "instance <key>",
-	Short:   "Cancel workflow instance by key",
+	Short:   "Cancel process instance by key",
 	Args:    keyArg(&cancelInstanceKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		zbCmd := client.
 			NewCancelInstanceCommand().
-			WorkflowInstanceKey(cancelInstanceKey)
+			ProcessInstanceKey(cancelInstanceKey)
 
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
 		_, err := zbCmd.Send(ctx)
 		if err == nil {
-			log.Println("Canceled workflow instance with key", cancelInstanceKey)
+			log.Println("Canceled process instance with key", cancelInstanceKey)
 		}
 		return err
 	},

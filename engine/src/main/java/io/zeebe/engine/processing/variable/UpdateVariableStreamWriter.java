@@ -35,7 +35,7 @@ public final class UpdateVariableStreamWriter
   @Override
   public void onCreate(
       final long key,
-      final long workflowKey,
+      final long processKey,
       final DirectBuffer name,
       final DirectBuffer value,
       final long variableScopeKey,
@@ -44,8 +44,8 @@ public final class UpdateVariableStreamWriter
         .setName(name)
         .setValue(value)
         .setScopeKey(variableScopeKey)
-        .setWorkflowInstanceKey(rootScopeKey)
-        .setWorkflowKey(workflowKey);
+        .setProcessInstanceKey(rootScopeKey)
+        .setProcessKey(processKey);
 
     streamWriter.appendFollowUpEvent(key, VariableIntent.CREATED, record);
   }
@@ -53,7 +53,7 @@ public final class UpdateVariableStreamWriter
   @Override
   public void onUpdate(
       final long key,
-      final long workflowKey,
+      final long processKey,
       final DirectBuffer name,
       final DirectBuffer value,
       final long variableScopeKey,
@@ -62,8 +62,8 @@ public final class UpdateVariableStreamWriter
         .setName(name)
         .setValue(value)
         .setScopeKey(variableScopeKey)
-        .setWorkflowInstanceKey(rootScopeKey)
-        .setWorkflowKey(workflowKey);
+        .setProcessInstanceKey(rootScopeKey)
+        .setProcessKey(processKey);
 
     streamWriter.appendFollowUpEvent(key, VariableIntent.UPDATED, record);
   }

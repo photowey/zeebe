@@ -23,7 +23,7 @@ public final class MessageSubscription extends UnpackedObject implements DbValue
   private final StringProperty correlationKeyProp = new StringProperty("correlationKey");
   private final StringProperty messageVariablesProp = new StringProperty("messageVariables", "");
 
-  private final LongProperty workflowInstanceKeyProp = new LongProperty("workflowInstanceKey", 0);
+  private final LongProperty processInstanceKeyProp = new LongProperty("processInstanceKey", 0);
   private final LongProperty elementInstanceKeyProp = new LongProperty("elementInstanceKey", 0);
   private final LongProperty messageKeyProp = new LongProperty("messageKey", 0);
   private final LongProperty commandSentTimeProp = new LongProperty("commandSentTime", 0);
@@ -35,7 +35,7 @@ public final class MessageSubscription extends UnpackedObject implements DbValue
         .declareProperty(messageNameProp)
         .declareProperty(correlationKeyProp)
         .declareProperty(messageVariablesProp)
-        .declareProperty(workflowInstanceKeyProp)
+        .declareProperty(processInstanceKeyProp)
         .declareProperty(elementInstanceKeyProp)
         .declareProperty(messageKeyProp)
         .declareProperty(commandSentTimeProp)
@@ -43,14 +43,14 @@ public final class MessageSubscription extends UnpackedObject implements DbValue
   }
 
   public MessageSubscription(
-      final long workflowInstanceKey,
+      final long processInstanceKey,
       final long elementInstanceKey,
       final DirectBuffer bpmnProcessId,
       final DirectBuffer messageName,
       final DirectBuffer correlationKey,
       final boolean closeOnCorrelate) {
     this();
-    workflowInstanceKeyProp.setValue(workflowInstanceKey);
+    processInstanceKeyProp.setValue(processInstanceKey);
     elementInstanceKeyProp.setValue(elementInstanceKey);
 
     bpmnProcessIdProp.setValue(bpmnProcessId);
@@ -79,8 +79,8 @@ public final class MessageSubscription extends UnpackedObject implements DbValue
     messageVariablesProp.setValue(variables);
   }
 
-  public long getWorkflowInstanceKey() {
-    return workflowInstanceKeyProp.getValue();
+  public long getProcessInstanceKey() {
+    return processInstanceKeyProp.getValue();
   }
 
   public long getElementInstanceKey() {

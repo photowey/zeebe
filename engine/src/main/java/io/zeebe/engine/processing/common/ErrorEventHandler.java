@@ -9,11 +9,11 @@ package io.zeebe.engine.processing.common;
 
 import io.zeebe.engine.processing.deployment.model.element.ExecutableActivity;
 import io.zeebe.engine.processing.deployment.model.element.ExecutableCatchEvent;
-import io.zeebe.engine.processing.deployment.model.element.ExecutableWorkflow;
+import io.zeebe.engine.processing.deployment.model.element.ExecutableProcess;
 import io.zeebe.engine.processing.streamprocessor.writers.TypedStreamWriter;
 import io.zeebe.engine.state.KeyGenerator;
 import io.zeebe.engine.state.immutable.ElementInstanceState;
-import io.zeebe.engine.state.immutable.WorkflowState;
+import io.zeebe.engine.state.immutable.ProcessState;
 import io.zeebe.engine.state.instance.ElementInstance;
 import io.zeebe.engine.state.mutable.MutableEventScopeInstanceState;
 import org.agrona.DirectBuffer;
@@ -25,16 +25,16 @@ public final class ErrorEventHandler {
 
   private final CatchEventTuple catchEventTuple = new CatchEventTuple();
 
-  private final WorkflowState workflowState;
+  private final ProcessState processState;
   private final ElementInstanceState elementInstanceState;
   private final EventHandle eventHandle;
 
   public ErrorEventHandler(
-      final WorkflowState workflowState,
+      final ProcessState processState,
       final ElementInstanceState elementInstanceState,
       final MutableEventScopeInstanceState eventScopeInstanceState,
       final KeyGenerator keyGenerator) {
-    this.workflowState = workflowState;
+    this.processState = processState;
     this.elementInstanceState = elementInstanceState;
 
     eventHandle = new EventHandle(keyGenerator, eventScopeInstanceState);
@@ -73,14 +73,14 @@ public final class ErrorEventHandler {
 
     while (instance != null && instance.isActive()) {
       final var instanceRecord = instance.getValue();
-      final var workflow = getWorkflow(instanceRecord.getWorkflowKey());
+      final var process = getProcess(instanceRecord.getProcessKey());
 
-      final var found = findCatchEventInWorkflow(errorCode, workflow, instance);
+      final var found = findCatchEventInProcess(errorCode, process, instance);
       if (found != null) {
         return found;
       }
 
-      // find in parent workflow instance if exists
+      // find in parent process instance if exists
       final var parentElementInstanceKey = instanceRecord.getParentElementInstanceKey();
       instance = elementInstanceState.getInstance(parentElementInstanceKey);
     }
@@ -89,11 +89,11 @@ public final class ErrorEventHandler {
     return null;
   }
 
-  private CatchEventTuple findCatchEventInWorkflow(
-      final DirectBuffer errorCode, final ExecutableWorkflow workflow, ElementInstance instance) {
+  private CatchEventTuple findCatchEventInProcess(
+      final DirectBuffer errorCode, final ExecutableProcess process, ElementInstance instance) {
 
     while (instance != null && instance.isActive() && !instance.isInterrupted()) {
-      final var found = findCatchEventInScope(errorCode, workflow, instance);
+      final var found = findCatchEventInScope(errorCode, process, instance);
       if (found != null) {
         return found;
       }
@@ -108,14 +108,14 @@ public final class ErrorEventHandler {
 
   private CatchEventTuple findCatchEventInScope(
       final DirectBuffer errorCode,
-      final ExecutableWorkflow workflow,
+      final ExecutableProcess process,
       final ElementInstance instance) {
 
-    final var workflowInstanceRecord = instance.getValue();
-    final var elementId = workflowInstanceRecord.getElementIdBuffer();
-    final var elementType = workflowInstanceRecord.getBpmnElementType();
+    final var processInstanceRecord = instance.getValue();
+    final var elementId = processInstanceRecord.getElementIdBuffer();
+    final var elementType = processInstanceRecord.getBpmnElementType();
 
-    final var element = workflow.getElementById(elementId, elementType, ExecutableActivity.class);
+    final var element = process.getElementById(elementId, elementType, ExecutableActivity.class);
 
     for (final ExecutableCatchEvent catchEvent : element.getEvents()) {
       if (hasErrorCode(catchEvent, errorCode)) {
@@ -134,16 +134,16 @@ public final class ErrorEventHandler {
     return catchEvent.isError() && catchEvent.getError().getErrorCode().equals(errorCode);
   }
 
-  private ExecutableWorkflow getWorkflow(final long workflowKey) {
+  private ExecutableProcess getProcess(final long processKey) {
 
-    final var deployedWorkflow = workflowState.getWorkflowByKey(workflowKey);
-    if (deployedWorkflow == null) {
+    final var deployedProcess = processState.getProcessByKey(processKey);
+    if (deployedProcess == null) {
       throw new IllegalStateException(
           String.format(
-              "Expected workflow with key '%d' to be deployed but not found", workflowKey));
+              "Expected process with key '%d' to be deployed but not found", processKey));
     }
 
-    return deployedWorkflow.getWorkflow();
+    return deployedProcess.getProcess();
   }
 
   private static class CatchEventTuple {

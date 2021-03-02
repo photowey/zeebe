@@ -9,22 +9,22 @@ package io.zeebe.engine.state.appliers;
 
 import io.zeebe.engine.state.TypedEventApplier;
 import io.zeebe.engine.state.mutable.MutableElementInstanceState;
-import io.zeebe.protocol.impl.record.value.workflowinstance.WorkflowInstanceRecord;
-import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
+import io.zeebe.protocol.impl.record.value.processinstance.ProcessInstanceRecord;
+import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
 
-/** Applies state changes for `WorkflowInstance:Element_Activated` */
-final class WorkflowInstanceElementActivatedApplier
-    implements TypedEventApplier<WorkflowInstanceIntent, WorkflowInstanceRecord> {
+/** Applies state changes for `ProcessInstance:Element_Activated` */
+final class ProcessInstanceElementActivatedApplier
+    implements TypedEventApplier<ProcessInstanceIntent, ProcessInstanceRecord> {
 
   private final MutableElementInstanceState elementInstanceState;
 
-  WorkflowInstanceElementActivatedApplier(final MutableElementInstanceState elementInstanceState) {
+  ProcessInstanceElementActivatedApplier(final MutableElementInstanceState elementInstanceState) {
     this.elementInstanceState = elementInstanceState;
   }
 
   @Override
-  public void applyState(final long key, final WorkflowInstanceRecord value) {
+  public void applyState(final long key, final ProcessInstanceRecord value) {
     elementInstanceState.updateInstance(
-        key, instance -> instance.setState(WorkflowInstanceIntent.ELEMENT_ACTIVATED));
+        key, instance -> instance.setState(ProcessInstanceIntent.ELEMENT_ACTIVATED));
   }
 }

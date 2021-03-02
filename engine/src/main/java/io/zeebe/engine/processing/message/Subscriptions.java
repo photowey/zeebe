@@ -38,7 +38,7 @@ public final class Subscriptions {
   public void add(final MessageSubscription subscription) {
     final var newSubscription = subscriptions.add();
     newSubscription.setBpmnProcessId(subscription.getBpmnProcessId());
-    newSubscription.workflowInstanceKey = subscription.getWorkflowInstanceKey();
+    newSubscription.processInstanceKey = subscription.getProcessInstanceKey();
     newSubscription.elementInstanceKey = subscription.getElementInstanceKey();
   }
 
@@ -78,7 +78,7 @@ public final class Subscriptions {
     private final DirectBuffer bufferView = new UnsafeBuffer(bpmnProcessId);
     private int bufferLength = 0;
 
-    private long workflowInstanceKey;
+    private long processInstanceKey;
     private long elementInstanceKey;
     private boolean isStartEventSubscription;
 
@@ -87,7 +87,7 @@ public final class Subscriptions {
       bufferLength = 0;
       bufferView.wrap(0, 0);
 
-      workflowInstanceKey = -1L;
+      processInstanceKey = -1L;
       elementInstanceKey = -1L;
       isStartEventSubscription = false;
     }
@@ -102,8 +102,8 @@ public final class Subscriptions {
       bufferView.wrap(this.bpmnProcessId, 0, bufferLength);
     }
 
-    public long getWorkflowInstanceKey() {
-      return workflowInstanceKey;
+    public long getProcessInstanceKey() {
+      return processInstanceKey;
     }
 
     public long getElementInstanceKey() {

@@ -30,8 +30,8 @@ import io.zeebe.protocol.record.RecordType;
 import io.zeebe.protocol.record.RejectionType;
 import io.zeebe.protocol.record.ValueType;
 import io.zeebe.protocol.record.intent.Intent;
-import io.zeebe.protocol.record.intent.WorkflowInstanceCreationIntent;
-import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
+import io.zeebe.protocol.record.intent.ProcessInstanceCreationIntent;
+import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.mockito.ArgumentCaptor;
@@ -96,8 +96,8 @@ public abstract class CommandProcessorTestCase<T extends UnifiedRecordValue> {
   protected TypedRecord<T> newCommand(final Class<T> clazz) {
     final RecordMetadata metadata =
         new RecordMetadata()
-            .intent(WorkflowInstanceCreationIntent.CREATE)
-            .valueType(ValueType.WORKFLOW_INSTANCE_CREATION)
+            .intent(ProcessInstanceCreationIntent.CREATE)
+            .valueType(ValueType.PROCESS_INSTANCE_CREATION)
             .recordType(RecordType.COMMAND);
     final T value;
 
@@ -115,7 +115,7 @@ public abstract class CommandProcessorTestCase<T extends UnifiedRecordValue> {
     verify(stateWriter)
         .appendFollowUpEvent(
             eq(instanceKey),
-            eq(WorkflowInstanceIntent.ELEMENT_ACTIVATING),
+            eq(ProcessInstanceIntent.ELEMENT_ACTIVATING),
             eq(instance.getValue()));
   }
 }

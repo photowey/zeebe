@@ -11,15 +11,15 @@ import io.zeebe.engine.processing.bpmn.BpmnElementContext;
 import io.zeebe.engine.processing.bpmn.BpmnProcessingException;
 import io.zeebe.engine.processing.streamprocessor.MigratedStreamProcessors;
 import io.zeebe.engine.state.ZeebeState;
-import io.zeebe.engine.state.deployment.DeployedWorkflow;
+import io.zeebe.engine.state.deployment.DeployedProcess;
 import io.zeebe.engine.state.immutable.JobState;
-import io.zeebe.engine.state.immutable.WorkflowState;
+import io.zeebe.engine.state.immutable.ProcessState;
 import io.zeebe.engine.state.instance.ElementInstance;
 import io.zeebe.engine.state.mutable.MutableElementInstanceState;
 import io.zeebe.engine.state.mutable.MutableEventScopeInstanceState;
 import io.zeebe.engine.state.mutable.MutableVariableState;
-import io.zeebe.protocol.impl.record.value.workflowinstance.WorkflowInstanceRecord;
-import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
+import io.zeebe.protocol.impl.record.value.processinstance.ProcessInstanceRecord;
+import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -32,10 +32,10 @@ public final class BpmnStateBehavior {
   private final MutableEventScopeInstanceState eventScopeInstanceState;
   private final MutableVariableState variablesState;
   private final JobState jobState;
-  private final WorkflowState workflowState;
+  private final ProcessState processState;
 
   public BpmnStateBehavior(final ZeebeState zeebeState) {
-    workflowState = zeebeState.getWorkflowState();
+    processState = zeebeState.getProcessState();
     elementInstanceState = zeebeState.getElementInstanceState();
     eventScopeInstanceState = zeebeState.getEventScopeInstanceState();
     variablesState = zeebeState.getVariableState();
@@ -130,28 +130,28 @@ public final class BpmnStateBehavior {
   public ElementInstance createChildElementInstance(
       final BpmnElementContext context,
       final long childInstanceKey,
-      final WorkflowInstanceRecord childRecord) {
+      final ProcessInstanceRecord childRecord) {
     final var parentElementInstance = getElementInstance(context);
     return elementInstanceState.newInstance(
         parentElementInstance,
         childInstanceKey,
         childRecord,
-        WorkflowInstanceIntent.ELEMENT_ACTIVATING);
+        ProcessInstanceIntent.ELEMENT_ACTIVATING);
   }
 
   public void createElementInstanceInFlowScope(
       final BpmnElementContext context,
       final long elementInstanceKey,
-      final WorkflowInstanceRecord record) {
+      final ProcessInstanceRecord record) {
     final ElementInstance flowScopeInstance = getFlowScopeInstance(context);
     elementInstanceState.newInstance(
-        flowScopeInstance, elementInstanceKey, record, WorkflowInstanceIntent.ELEMENT_ACTIVATING);
+        flowScopeInstance, elementInstanceKey, record, ProcessInstanceIntent.ELEMENT_ACTIVATING);
   }
 
   public ElementInstance createElementInstance(
-      final long childInstanceKey, final WorkflowInstanceRecord childRecord) {
+      final long childInstanceKey, final ProcessInstanceRecord childRecord) {
     return elementInstanceState.newInstance(
-        childInstanceKey, childRecord, WorkflowInstanceIntent.ELEMENT_ACTIVATING);
+        childInstanceKey, childRecord, ProcessInstanceIntent.ELEMENT_ACTIVATING);
   }
 
   public BpmnElementContext getFlowScopeContext(final BpmnElementContext context) {
@@ -168,13 +168,13 @@ public final class BpmnStateBehavior {
         parentElementInstance.getState());
   }
 
-  public Optional<DeployedWorkflow> getWorkflow(final long workflowKey) {
-    return Optional.ofNullable(workflowState.getWorkflowByKey(workflowKey));
+  public Optional<DeployedProcess> getProcess(final long processKey) {
+    return Optional.ofNullable(processState.getProcessByKey(processKey));
   }
 
-  public Optional<DeployedWorkflow> getLatestWorkflowVersion(final DirectBuffer processId) {
-    final var workflow = workflowState.getLatestWorkflowVersionByProcessId(processId);
-    return Optional.ofNullable(workflow);
+  public Optional<DeployedProcess> getLatestProcessVersion(final DirectBuffer processId) {
+    final var process = processState.getLatestProcessVersionByProcessId(processId);
+    return Optional.ofNullable(process);
   }
 
   public Optional<ElementInstance> getCalledChildInstance(final BpmnElementContext context) {
@@ -203,7 +203,7 @@ public final class BpmnStateBehavior {
       final int valueLength) {
     variablesState.setVariableLocal(
         context.getElementInstanceKey(),
-        context.getWorkflowKey(),
+        context.getProcessKey(),
         variableName,
         variableValue,
         valueOffset,
@@ -219,13 +219,13 @@ public final class BpmnStateBehavior {
         variablesState.getVariablesAsDocument(sourceScope, List.of(variableName));
 
     variablesState.setVariablesFromDocument(
-        targetScope, context.getWorkflowKey(), variablesAsDocument);
+        targetScope, context.getProcessKey(), variablesAsDocument);
   }
 
   public void copyVariables(
-      final long source, final long target, final DeployedWorkflow targetWorkflow) {
+      final long source, final long target, final DeployedProcess targetProcess) {
     final var variables = variablesState.getVariablesAsDocument(source);
-    variablesState.setVariablesFromDocument(target, targetWorkflow.getKey(), variables);
+    variablesState.setVariablesFromDocument(target, targetProcess.getKey(), variables);
   }
 
   public void propagateTemporaryVariables(

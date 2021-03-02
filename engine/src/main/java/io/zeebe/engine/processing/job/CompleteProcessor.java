@@ -16,10 +16,10 @@ import io.zeebe.engine.state.immutable.ElementInstanceState;
 import io.zeebe.engine.state.immutable.JobState;
 import io.zeebe.engine.state.instance.ElementInstance;
 import io.zeebe.protocol.impl.record.value.job.JobRecord;
-import io.zeebe.protocol.impl.record.value.workflowinstance.WorkflowInstanceRecord;
+import io.zeebe.protocol.impl.record.value.processinstance.ProcessInstanceRecord;
 import io.zeebe.protocol.record.intent.Intent;
 import io.zeebe.protocol.record.intent.JobIntent;
-import io.zeebe.protocol.record.intent.WorkflowInstanceIntent;
+import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
 
 public final class CompleteProcessor implements CommandProcessor<JobRecord> {
 
@@ -69,12 +69,12 @@ public final class CompleteProcessor implements CommandProcessor<JobRecord> {
       final ElementInstance scopeInstance = elementInstanceState.getInstance(scopeKey);
 
       if (scopeInstance != null && scopeInstance.isActive()) {
-        final WorkflowInstanceRecord workflowInstanceRecord = serviceTask.getValue();
+        final ProcessInstanceRecord processInstanceRecord = serviceTask.getValue();
 
         // TODO (#6172) send out COMPLETE_ELEMENT command when service task processor is registered
         // for COMPLETE_ELEMENT commands; switch out for command writer
         stateWriter.appendFollowUpEvent(
-            serviceTaskKey, WorkflowInstanceIntent.ELEMENT_COMPLETING, workflowInstanceRecord);
+            serviceTaskKey, ProcessInstanceIntent.ELEMENT_COMPLETING, processInstanceRecord);
       }
     }
   }

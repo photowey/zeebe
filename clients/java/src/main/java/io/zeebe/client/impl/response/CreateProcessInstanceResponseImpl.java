@@ -15,27 +15,27 @@
  */
 package io.zeebe.client.impl.response;
 
-import io.zeebe.client.api.response.WorkflowInstanceEvent;
+import io.zeebe.client.api.response.ProcessInstanceEvent;
 import io.zeebe.gateway.protocol.GatewayOuterClass;
 
-public final class CreateWorkflowInstanceResponseImpl implements WorkflowInstanceEvent {
+public final class CreateProcessInstanceResponseImpl implements ProcessInstanceEvent {
 
-  private final long workflowKey;
+  private final long processKey;
   private final String bpmnProcessId;
   private final int version;
-  private final long workflowInstanceKey;
+  private final long processInstanceKey;
 
-  public CreateWorkflowInstanceResponseImpl(
-      final GatewayOuterClass.CreateWorkflowInstanceResponse response) {
-    workflowKey = response.getWorkflowKey();
+  public CreateProcessInstanceResponseImpl(
+      final GatewayOuterClass.CreateProcessInstanceResponse response) {
+    processKey = response.getProcessKey();
     bpmnProcessId = response.getBpmnProcessId();
     version = response.getVersion();
-    workflowInstanceKey = response.getWorkflowInstanceKey();
+    processInstanceKey = response.getProcessInstanceKey();
   }
 
   @Override
-  public long getWorkflowKey() {
-    return workflowKey;
+  public long getProcessKey() {
+    return processKey;
   }
 
   @Override
@@ -49,22 +49,22 @@ public final class CreateWorkflowInstanceResponseImpl implements WorkflowInstanc
   }
 
   @Override
-  public long getWorkflowInstanceKey() {
-    return workflowInstanceKey;
+  public long getProcessInstanceKey() {
+    return processInstanceKey;
   }
 
   @Override
   public String toString() {
-    return "CreateWorkflowInstanceResponseImpl{"
-        + "workflowKey="
-        + workflowKey
+    return "CreateProcessInstanceResponseImpl{"
+        + "processKey="
+        + processKey
         + ", bpmnProcessId='"
         + bpmnProcessId
         + '\''
         + ", version="
         + version
-        + ", workflowInstanceKey="
-        + workflowInstanceKey
+        + ", processInstanceKey="
+        + processInstanceKey
         + '}';
   }
 }
