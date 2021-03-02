@@ -139,8 +139,7 @@ public final class ErrorEventHandler {
     final var deployedProcess = processState.getProcessByKey(processKey);
     if (deployedProcess == null) {
       throw new IllegalStateException(
-          String.format(
-              "Expected process with key '%d' to be deployed but not found", processKey));
+          String.format("Expected process with key '%d' to be deployed but not found", processKey));
     }
 
     return deployedProcess.getProcess();

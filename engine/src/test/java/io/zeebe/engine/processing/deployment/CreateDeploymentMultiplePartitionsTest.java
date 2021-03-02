@@ -305,8 +305,7 @@ public final class CreateDeploymentMultiplePartitionsTest {
         repeatedWf -> assertDifferentResources(originalProcesses.get(0), repeatedWf));
   }
 
-  private void assertSameResource(
-      final DeployedProcess original, final DeployedProcess repeated) {
+  private void assertSameResource(final DeployedProcess original, final DeployedProcess repeated) {
     Assertions.assertThat(repeated)
         .hasVersion(original.getVersion())
         .hasProcessKey(original.getProcessKey())

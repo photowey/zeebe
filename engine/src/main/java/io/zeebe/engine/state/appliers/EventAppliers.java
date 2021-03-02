@@ -99,8 +99,7 @@ public final class EventAppliers implements EventApplier {
         new ProcessInstanceElementTerminatingApplier(elementInstanceState));
     register(
         ProcessInstanceIntent.ELEMENT_TERMINATED,
-        new ProcessInstanceElementTerminatedApplier(
-            elementInstanceState, eventScopeInstanceState));
+        new ProcessInstanceElementTerminatedApplier(elementInstanceState, eventScopeInstanceState));
     register(
         ProcessInstanceIntent.SEQUENCE_FLOW_TAKEN,
         new ProcessInstanceSequenceFlowTakenApplier(elementInstanceState));

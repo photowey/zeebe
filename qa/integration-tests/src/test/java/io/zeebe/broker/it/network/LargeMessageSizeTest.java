@@ -122,7 +122,6 @@ public final class LargeMessageSizeTest {
         .open();
 
     // then
-    ZeebeAssertHelper.assertProcessInstanceCompleted(
-        processInstanceEvent.getProcessInstanceKey());
+    ZeebeAssertHelper.assertProcessInstanceCompleted(processInstanceEvent.getProcessInstanceKey());
   }
 }

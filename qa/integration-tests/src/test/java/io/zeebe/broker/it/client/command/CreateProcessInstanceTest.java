@@ -215,7 +215,6 @@ public final class CreateProcessInstanceTest {
 
     assertThatThrownBy(() -> command.join())
         .isInstanceOf(ClientException.class)
-        .hasMessageContaining(
-            "Expected to find process definition with key '123', but none found");
+        .hasMessageContaining("Expected to find process definition with key '123', but none found");
   }
 }

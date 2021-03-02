@@ -114,8 +114,6 @@ public abstract class CommandProcessorTestCase<T extends UnifiedRecordValue> {
       final long instanceKey, final ElementInstance instance) {
     verify(stateWriter)
         .appendFollowUpEvent(
-            eq(instanceKey),
-            eq(ProcessInstanceIntent.ELEMENT_ACTIVATING),
-            eq(instance.getValue()));
+            eq(instanceKey), eq(ProcessInstanceIntent.ELEMENT_ACTIVATING), eq(instance.getValue()));
   }
 }

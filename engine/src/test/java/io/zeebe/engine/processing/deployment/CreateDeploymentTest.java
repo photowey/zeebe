@@ -590,8 +590,7 @@ public final class CreateDeploymentTest {
         .orElse(null);
   }
 
-  private void assertSameResource(
-      final DeployedProcess original, final DeployedProcess repeated) {
+  private void assertSameResource(final DeployedProcess original, final DeployedProcess repeated) {
     io.zeebe.protocol.record.Assertions.assertThat(repeated)
         .hasVersion(original.getVersion())
         .hasProcessKey(original.getProcessKey())

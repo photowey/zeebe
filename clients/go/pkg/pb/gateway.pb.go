@@ -2506,15 +2506,15 @@ var file_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_gateway_proto_goTypes = []interface{}{
 	(ProcessRequestObject_ResourceType)(0),          // 0: gateway_protocol.ProcessRequestObject.ResourceType
-	(Partition_PartitionBrokerRole)(0),               // 1: gateway_protocol.Partition.PartitionBrokerRole
-	(Partition_PartitionBrokerHealth)(0),             // 2: gateway_protocol.Partition.PartitionBrokerHealth
-	(*ActivateJobsRequest)(nil),                      // 3: gateway_protocol.ActivateJobsRequest
-	(*ActivateJobsResponse)(nil),                     // 4: gateway_protocol.ActivateJobsResponse
-	(*ActivatedJob)(nil),                             // 5: gateway_protocol.ActivatedJob
+	(Partition_PartitionBrokerRole)(0),              // 1: gateway_protocol.Partition.PartitionBrokerRole
+	(Partition_PartitionBrokerHealth)(0),            // 2: gateway_protocol.Partition.PartitionBrokerHealth
+	(*ActivateJobsRequest)(nil),                     // 3: gateway_protocol.ActivateJobsRequest
+	(*ActivateJobsResponse)(nil),                    // 4: gateway_protocol.ActivateJobsResponse
+	(*ActivatedJob)(nil),                            // 5: gateway_protocol.ActivatedJob
 	(*CancelProcessInstanceRequest)(nil),            // 6: gateway_protocol.CancelProcessInstanceRequest
 	(*CancelProcessInstanceResponse)(nil),           // 7: gateway_protocol.CancelProcessInstanceResponse
-	(*CompleteJobRequest)(nil),                       // 8: gateway_protocol.CompleteJobRequest
-	(*CompleteJobResponse)(nil),                      // 9: gateway_protocol.CompleteJobResponse
+	(*CompleteJobRequest)(nil),                      // 8: gateway_protocol.CompleteJobRequest
+	(*CompleteJobResponse)(nil),                     // 9: gateway_protocol.CompleteJobResponse
 	(*CreateProcessInstanceRequest)(nil),            // 10: gateway_protocol.CreateProcessInstanceRequest
 	(*CreateProcessInstanceResponse)(nil),           // 11: gateway_protocol.CreateProcessInstanceResponse
 	(*CreateProcessInstanceWithResultRequest)(nil),  // 12: gateway_protocol.CreateProcessInstanceWithResultRequest
@@ -2523,22 +2523,22 @@ var file_gateway_proto_goTypes = []interface{}{
 	(*ProcessRequestObject)(nil),                    // 15: gateway_protocol.ProcessRequestObject
 	(*DeployProcessResponse)(nil),                   // 16: gateway_protocol.DeployProcessResponse
 	(*ProcessMetadata)(nil),                         // 17: gateway_protocol.ProcessMetadata
-	(*FailJobRequest)(nil),                           // 18: gateway_protocol.FailJobRequest
-	(*FailJobResponse)(nil),                          // 19: gateway_protocol.FailJobResponse
-	(*ThrowErrorRequest)(nil),                        // 20: gateway_protocol.ThrowErrorRequest
-	(*ThrowErrorResponse)(nil),                       // 21: gateway_protocol.ThrowErrorResponse
-	(*PublishMessageRequest)(nil),                    // 22: gateway_protocol.PublishMessageRequest
-	(*PublishMessageResponse)(nil),                   // 23: gateway_protocol.PublishMessageResponse
-	(*ResolveIncidentRequest)(nil),                   // 24: gateway_protocol.ResolveIncidentRequest
-	(*ResolveIncidentResponse)(nil),                  // 25: gateway_protocol.ResolveIncidentResponse
-	(*TopologyRequest)(nil),                          // 26: gateway_protocol.TopologyRequest
-	(*TopologyResponse)(nil),                         // 27: gateway_protocol.TopologyResponse
-	(*BrokerInfo)(nil),                               // 28: gateway_protocol.BrokerInfo
-	(*Partition)(nil),                                // 29: gateway_protocol.Partition
-	(*UpdateJobRetriesRequest)(nil),                  // 30: gateway_protocol.UpdateJobRetriesRequest
-	(*UpdateJobRetriesResponse)(nil),                 // 31: gateway_protocol.UpdateJobRetriesResponse
-	(*SetVariablesRequest)(nil),                      // 32: gateway_protocol.SetVariablesRequest
-	(*SetVariablesResponse)(nil),                     // 33: gateway_protocol.SetVariablesResponse
+	(*FailJobRequest)(nil),                          // 18: gateway_protocol.FailJobRequest
+	(*FailJobResponse)(nil),                         // 19: gateway_protocol.FailJobResponse
+	(*ThrowErrorRequest)(nil),                       // 20: gateway_protocol.ThrowErrorRequest
+	(*ThrowErrorResponse)(nil),                      // 21: gateway_protocol.ThrowErrorResponse
+	(*PublishMessageRequest)(nil),                   // 22: gateway_protocol.PublishMessageRequest
+	(*PublishMessageResponse)(nil),                  // 23: gateway_protocol.PublishMessageResponse
+	(*ResolveIncidentRequest)(nil),                  // 24: gateway_protocol.ResolveIncidentRequest
+	(*ResolveIncidentResponse)(nil),                 // 25: gateway_protocol.ResolveIncidentResponse
+	(*TopologyRequest)(nil),                         // 26: gateway_protocol.TopologyRequest
+	(*TopologyResponse)(nil),                        // 27: gateway_protocol.TopologyResponse
+	(*BrokerInfo)(nil),                              // 28: gateway_protocol.BrokerInfo
+	(*Partition)(nil),                               // 29: gateway_protocol.Partition
+	(*UpdateJobRetriesRequest)(nil),                 // 30: gateway_protocol.UpdateJobRetriesRequest
+	(*UpdateJobRetriesResponse)(nil),                // 31: gateway_protocol.UpdateJobRetriesResponse
+	(*SetVariablesRequest)(nil),                     // 32: gateway_protocol.SetVariablesRequest
+	(*SetVariablesResponse)(nil),                    // 33: gateway_protocol.SetVariablesResponse
 }
 var file_gateway_proto_depIdxs = []int32{
 	5,  // 0: gateway_protocol.ActivateJobsResponse.jobs:type_name -> gateway_protocol.ActivatedJob

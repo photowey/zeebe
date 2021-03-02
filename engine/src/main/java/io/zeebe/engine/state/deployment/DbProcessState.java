@@ -136,9 +136,7 @@ public final class DbProcessState implements MutableProcessState {
 
   @Deprecated
   private void persistProcess(
-      final long processKey,
-      final ProcessRecord processRecord,
-      final DeploymentResource resource) {
+      final long processKey, final ProcessRecord processRecord, final DeploymentResource resource) {
     persistedProcess.wrap(resource, processRecord, processKey);
     this.processKey.wrapLong(processKey);
     processColumnFamily.put(this.processKey, persistedProcess);
@@ -181,8 +179,7 @@ public final class DbProcessState implements MutableProcessState {
             .findFirst()
             .get();
 
-    final DeployedProcess deployedProcess =
-        new DeployedProcess(executableProcess, copiedProcess);
+    final DeployedProcess deployedProcess = new DeployedProcess(executableProcess, copiedProcess);
 
     addProcessToInMemoryState(deployedProcess);
 
@@ -231,8 +228,7 @@ public final class DbProcessState implements MutableProcessState {
     return deployedProcess;
   }
 
-  private DeployedProcess lookupProcessByIdAndPersistedVersion(
-      final LatestProcessVersion version) {
+  private DeployedProcess lookupProcessByIdAndPersistedVersion(final LatestProcessVersion version) {
     final long latestVersion = version != null ? version.get() : -1;
     processVersion.wrapLong(latestVersion);
 
@@ -254,9 +250,7 @@ public final class DbProcessState implements MutableProcessState {
 
     if (versionMap != null) {
       final DeployedProcess deployedProcess = versionMap.get(version);
-      return deployedProcess != null
-          ? deployedProcess
-          : lookupPersistenceState(processId, version);
+      return deployedProcess != null ? deployedProcess : lookupPersistenceState(processId, version);
     } else {
       return lookupPersistenceState(processId, version);
     }
@@ -315,8 +309,7 @@ public final class DbProcessState implements MutableProcessState {
   }
 
   @Override
-  public Collection<DeployedProcess> getProcessesByBpmnProcessId(
-      final DirectBuffer bpmnProcessId) {
+  public Collection<DeployedProcess> getProcessesByBpmnProcessId(final DirectBuffer bpmnProcessId) {
     updateCompleteInMemoryState();
 
     final Long2ObjectHashMap<DeployedProcess> processesByVersions =

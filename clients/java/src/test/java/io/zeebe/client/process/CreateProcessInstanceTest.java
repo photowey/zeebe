@@ -80,12 +80,7 @@ public final class CreateProcessInstanceTest extends ClientTest {
   @Test
   public void shouldCreateProcessInstanceWithStringVariables() {
     // when
-    client
-        .newCreateInstanceCommand()
-        .processKey(123)
-        .variables("{\"foo\": \"bar\"}")
-        .send()
-        .join();
+    client.newCreateInstanceCommand().processKey(123).variables("{\"foo\": \"bar\"}").send().join();
 
     // then
     final CreateProcessInstanceRequest request = gatewayService.getLastRequest();

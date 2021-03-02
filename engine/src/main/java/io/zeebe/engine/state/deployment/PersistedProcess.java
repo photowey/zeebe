@@ -34,9 +34,7 @@ public final class PersistedProcess extends UnpackedObject implements DbValue {
 
   @Deprecated
   public void wrap(
-      final DeploymentResource resource,
-      final ProcessRecord processRecord,
-      final long processKey) {
+      final DeploymentResource resource, final ProcessRecord processRecord, final long processKey) {
     bpmnProcessIdProp.setValue(processRecord.getBpmnProcessIdBuffer());
     resourceNameProp.setValue(resource.getResourceNameBuffer());
     resourceProp.setValue(resource.getResourceBuffer());

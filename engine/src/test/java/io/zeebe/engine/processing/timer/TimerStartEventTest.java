@@ -16,11 +16,11 @@ import io.zeebe.model.bpmn.BpmnModelInstance;
 import io.zeebe.model.bpmn.builder.ProcessBuilder;
 import io.zeebe.protocol.record.Assertions;
 import io.zeebe.protocol.record.Record;
-import io.zeebe.protocol.record.intent.TimerIntent;
 import io.zeebe.protocol.record.intent.ProcessInstanceIntent;
+import io.zeebe.protocol.record.intent.TimerIntent;
 import io.zeebe.protocol.record.value.BpmnElementType;
-import io.zeebe.protocol.record.value.TimerRecordValue;
 import io.zeebe.protocol.record.value.ProcessInstanceRecordValue;
+import io.zeebe.protocol.record.value.TimerRecordValue;
 import io.zeebe.protocol.record.value.deployment.DeployedProcess;
 import io.zeebe.test.util.record.RecordingExporter;
 import java.time.Duration;
@@ -190,9 +190,7 @@ public final class TimerStartEventTest {
 
     final long processKey = deployedProcess.getProcessKey();
     assertThat(
-            RecordingExporter.timerRecords(TimerIntent.CREATED)
-                .withProcessKey(processKey)
-                .exists())
+            RecordingExporter.timerRecords(TimerIntent.CREATED).withProcessKey(processKey).exists())
         .isTrue();
 
     // when
@@ -254,9 +252,7 @@ public final class TimerStartEventTest {
 
     // when
     assertThat(
-            RecordingExporter.timerRecords(TimerIntent.CREATED)
-                .withProcessKey(processKey)
-                .exists())
+            RecordingExporter.timerRecords(TimerIntent.CREATED).withProcessKey(processKey).exists())
         .isTrue();
     engine.increaseTime(Duration.ofSeconds(3));
 
@@ -462,9 +458,7 @@ public final class TimerStartEventTest {
 
     final long processKey = deployedProcess.getProcessKey();
     assertThat(
-            RecordingExporter.timerRecords(TimerIntent.CREATED)
-                .withProcessKey(processKey)
-                .exists())
+            RecordingExporter.timerRecords(TimerIntent.CREATED).withProcessKey(processKey).exists())
         .isTrue();
 
     // when
