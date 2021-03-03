@@ -16,22 +16,21 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/zeebe-io/zeebe/clients/go/pkg/commands"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
-	"log"
 )
 
 type CompleteJobResponseWrapper struct {
 	resp *pb.CompleteJobResponse
 }
 
-func (c CompleteJobResponseWrapper) protoMessage() ProtoMessage {
-	return c.resp
+func (c CompleteJobResponseWrapper) json() (string, error) {
+	return toJSON(c.resp)
 }
 
-func (c CompleteJobResponseWrapper) print() {
-	log.Println("Completed job with key", completeJobKey, "and variables", completeJobVariablesFlag)
+func (c CompleteJobResponseWrapper) human() (string, error) {
+	return fmt.Sprint("Completed job with key", completeJobKey, "and variables", completeJobVariablesFlag), nil
 }
 
 var (
@@ -45,16 +44,7 @@ var completeJobCmd = &cobra.Command{
 	Args:    keyArg(&completeJobKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err     error
-			printer Printer
-		)
-		printer, err = findPrinter()
-		if err != nil {
-			return err
-		}
-		var request commands.DispatchCompleteJobCommand
-		request, err = client.NewCompleteJobCommand().JobKey(completeJobKey).VariablesFromString(completeJobVariablesFlag)
+		request, err := client.NewCompleteJobCommand().JobKey(completeJobKey).VariablesFromString(completeJobVariablesFlag)
 		if err != nil {
 			return err
 		}
@@ -67,7 +57,7 @@ var completeJobCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = printer.print(CompleteJobResponseWrapper{resp})
+		err = logHumanAndPrintJSON(CompleteJobResponseWrapper{resp})
 		return err
 	},
 }

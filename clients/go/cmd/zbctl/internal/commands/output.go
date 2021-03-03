@@ -16,48 +16,17 @@ package commands
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/proto"
+	"log"
 )
-
-type ProtoMessage proto.Message
-type Command cobra.Command
-
-type Printer interface {
-	print(message Printable) error
-}
-type JSONPrinter struct {
-}
-type HumanPrinter struct {
-}
-
-func findPrinter() (Printer, error) {
-	printer := outputMap[outputFlag]
-	if printer == nil {
-		return nil, fmt.Errorf("cannot find proper printer for %s output", outputFlag)
-	}
-	return printer, nil
-}
 
 const humanOutput = "human"
 const jsonOutput = "json"
 
-var (
-	outputFlag string
-	outputMap  = map[string]Printer{humanOutput: &HumanPrinter{}, jsonOutput: &JSONPrinter{}}
-)
-
-func (jsonPrinter *JSONPrinter) print(message Printable) error {
-	return printJSON(message.protoMessage())
-}
-
-func (humanPrinter *HumanPrinter) print(message Printable) error {
-	message.print()
-	return nil
-}
+var outputFlag string
 
 type Printable interface {
-	protoMessage() ProtoMessage
-	print()
+	human() (string, error)
+	json() (string, error)
 }
 
 func addOutputFlag(c *cobra.Command) {
@@ -68,4 +37,40 @@ func addOutputFlag(c *cobra.Command) {
 		humanOutput,
 		"Specify output format. Default is human readable. Possible Values: human, json",
 	)
+}
+
+func printHumanAndJSON(p Printable) error {
+	var responseAsString string
+	if outputFlag == humanOutput {
+		human, err := p.human()
+		if err != nil {
+			return err
+		}
+		responseAsString = human
+	} else if outputFlag == jsonOutput {
+		json, err := p.json()
+		if err != nil {
+			return err
+		}
+		responseAsString = json
+	}
+	fmt.Print(responseAsString)
+	return nil
+}
+
+func logHumanAndPrintJSON(p Printable) error {
+	if outputFlag == humanOutput {
+		human, err := p.human()
+		if err != nil {
+			return err
+		}
+		log.Println(human)
+	} else if outputFlag == jsonOutput {
+		json, err := p.json()
+		if err != nil {
+			return err
+		}
+		fmt.Println(json)
+	}
+	return nil
 }

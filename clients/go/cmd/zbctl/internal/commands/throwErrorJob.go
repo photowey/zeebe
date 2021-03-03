@@ -16,9 +16,9 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
-	"log"
 )
 
 var (
@@ -31,12 +31,12 @@ type ThrowErrorResponseWrapper struct {
 	resp *pb.ThrowErrorResponse
 }
 
-func (t ThrowErrorResponseWrapper) protoMessage() ProtoMessage {
-	return t.resp
+func (t ThrowErrorResponseWrapper) human() (string, error) {
+	return fmt.Sprintf("Threw error with code '%s' on job with key %d\n", errorCode, jobKey), nil
 }
 
-func (t ThrowErrorResponseWrapper) print() {
-	log.Printf("Threw error with code '%s' on job with key %d\n", errorCode, jobKey)
+func (t ThrowErrorResponseWrapper) json() (string, error) {
+	return toJSON(t.resp)
 }
 
 var throwErrorJobCmd = &cobra.Command{
@@ -45,24 +45,15 @@ var throwErrorJobCmd = &cobra.Command{
 	Args:    keyArg(&jobKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err     error
-			printer Printer
-		)
-		printer, err = findPrinter()
-		if err != nil {
-			return err
-		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		var resp *pb.ThrowErrorResponse
-		resp, err = client.NewThrowErrorCommand().JobKey(jobKey).ErrorCode(errorCode).ErrorMessage(errorMessage).Send(ctx)
+		resp, err := client.NewThrowErrorCommand().JobKey(jobKey).ErrorCode(errorCode).ErrorMessage(errorMessage).Send(ctx)
 		if err != nil {
 			return err
 		}
 
-		err = printer.print(ThrowErrorResponseWrapper{resp})
+		err = logHumanAndPrintJSON(ThrowErrorResponseWrapper{resp})
 		return err
 	},
 }

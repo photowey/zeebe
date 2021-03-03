@@ -203,10 +203,18 @@ func keyArg(key *int64) cobra.PositionalArgs {
 }
 
 func printJSON(value proto.Message) error {
+	json, err := toJSON(value)
+	if err == nil {
+		fmt.Println(json)
+	}
+	return err
+}
+
+func toJSON(value proto.Message) (string, error) {
 	m := protojson.MarshalOptions{EmitUnpopulated: true, Indent: "  "}
 	valueJSON, err := m.Marshal(value)
 	if err == nil {
-		fmt.Println(string(valueJSON))
+		return string(valueJSON), nil
 	}
-	return err
+	return "", err
 }

@@ -19,51 +19,53 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
 	"sort"
+	"strings"
 )
 
 type StatusResponseWrapper struct {
 	response *pb.TopologyResponse
 }
 
-func (s StatusResponseWrapper) protoMessage() ProtoMessage {
-	return s.response
+func (s StatusResponseWrapper) json() (string, error) {
+	return toJSON(s.response)
 }
 
-func (s StatusResponseWrapper) print() {
+func (s StatusResponseWrapper) human() (string, error) {
 	resp := s.response
 	gatewayVersion := "unavailable"
 	if resp.GatewayVersion != "" {
 		gatewayVersion = resp.GatewayVersion
 	}
 
-	fmt.Println("Cluster size:", resp.ClusterSize)
-	fmt.Println("Partitions count:", resp.PartitionsCount)
-	fmt.Println("Replication factor:", resp.ReplicationFactor)
-	fmt.Println("Gateway version:", gatewayVersion)
-	fmt.Println("Brokers:")
+	var stringBuilder strings.Builder
+
+	stringBuilder.WriteString(fmt.Sprintf("Cluster size: %d\n", resp.ClusterSize))
+	stringBuilder.WriteString(fmt.Sprintf("Partitions count: %d\n", resp.PartitionsCount))
+	stringBuilder.WriteString(fmt.Sprintf("Replication factor: %d\n", resp.ReplicationFactor))
+	stringBuilder.WriteString(fmt.Sprintf("Gateway version: %s\n", gatewayVersion))
+	stringBuilder.WriteString("Brokers:\n")
 
 	sort.Sort(ByNodeID(resp.Brokers))
 
 	for _, broker := range resp.Brokers {
-		fmt.Printf("  Broker %d - %s:%d\n", broker.NodeId, broker.Host, broker.Port)
+		stringBuilder.WriteString(fmt.Sprintf("  Broker %d - %s:%d\n", broker.NodeId, broker.Host, broker.Port))
 
 		version := "unavailable"
 		if broker.Version != "" {
 			version = broker.Version
 		}
 
-		fmt.Printf("    Version: %s\n", version)
+		stringBuilder.WriteString(fmt.Sprintf("    Version: %s\n", version))
 
 		sort.Sort(ByPartitionID(broker.Partitions))
 		for _, partition := range broker.Partitions {
-			fmt.Printf(
-				"    Partition %d : %s, %s\n",
+			stringBuilder.WriteString(fmt.Sprintf("    Partition %d : %s, %s\n",
 				partition.PartitionId,
 				roleToString(partition.Role),
-				healthToString(partition.Health),
-			)
+				healthToString(partition.Health)))
 		}
 	}
+	return stringBuilder.String(), nil
 }
 
 type ByNodeID []*pb.BrokerInfo
@@ -84,24 +86,15 @@ var statusCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err     error
-			printer Printer
-		)
-		printer, err = findPrinter()
-		if err != nil {
-			return err
-		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		var resp *pb.TopologyResponse
-		resp, err = client.NewTopologyCommand().Send(ctx)
+		resp, err := client.NewTopologyCommand().Send(ctx)
 		if err != nil {
 			return err
 		}
 
-		err = printer.print(StatusResponseWrapper{resp})
+		err = printHumanAndJSON(StatusResponseWrapper{resp})
 		if err != nil {
 			return err
 		}

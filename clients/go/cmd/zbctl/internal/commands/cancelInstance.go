@@ -15,21 +15,21 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
-	"log"
 )
 
 type CancelInstanceResponseWrapper struct {
 	resp *pb.CancelWorkflowInstanceResponse
 }
 
-func (c CancelInstanceResponseWrapper) protoMessage() ProtoMessage {
-	return c.resp
+func (c CancelInstanceResponseWrapper) human() (string, error) {
+	return fmt.Sprint("Canceled workflow instance with key", cancelInstanceKey), nil
 }
 
-func (c CancelInstanceResponseWrapper) print() {
-	log.Println("Canceled workflow instance with key", cancelInstanceKey)
+func (c CancelInstanceResponseWrapper) json() (string, error) {
+	return toJSON(c.resp)
 }
 
 var cancelInstanceKey int64
@@ -40,14 +40,6 @@ var cancelInstanceCmd = &cobra.Command{
 	Args:    keyArg(&cancelInstanceKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err     error
-			printer Printer
-		)
-		printer, err = findPrinter()
-		if err != nil {
-			return err
-		}
 		zbCmd := client.
 			NewCancelInstanceCommand().
 			WorkflowInstanceKey(cancelInstanceKey)
@@ -55,12 +47,11 @@ var cancelInstanceCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		var resp *pb.CancelWorkflowInstanceResponse
-		resp, err = zbCmd.Send(ctx)
+		resp, err := zbCmd.Send(ctx)
 		if err != nil {
 			return err
 		}
-		err = printer.print(CancelInstanceResponseWrapper{resp})
+		err = logHumanAndPrintJSON(CancelInstanceResponseWrapper{resp})
 		return err
 	},
 }

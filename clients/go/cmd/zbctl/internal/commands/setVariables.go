@@ -16,21 +16,21 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
-	"log"
 )
 
 type SetVariablesResponseWrapper struct {
 	resp *pb.SetVariablesResponse
 }
 
-func (s SetVariablesResponseWrapper) protoMessage() ProtoMessage {
-	return s.resp
+func (s SetVariablesResponseWrapper) human() (string, error) {
+	return fmt.Sprint("Set the variables of element instance with key", setVariablesKey, "to", setVariablesVariablesFlag, "with command", s.resp.GetKey()), nil
 }
 
-func (s SetVariablesResponseWrapper) print() {
-	log.Println("Set the variables of element instance with key", setVariablesKey, "to", setVariablesVariablesFlag, "with command", s.resp.GetKey())
+func (s SetVariablesResponseWrapper) json() (string, error) {
+	return toJSON(s.resp)
 }
 
 var (
@@ -45,14 +45,6 @@ var setVariablesCmd = &cobra.Command{
 	Args:    keyArg(&setVariablesKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err     error
-			printer Printer
-		)
-		printer, err = findPrinter()
-		if err != nil {
-			return err
-		}
 		request, err := client.NewSetVariablesCommand().ElementInstanceKey(setVariablesKey).VariablesFromString(setVariablesVariablesFlag)
 		if err != nil {
 			return err
@@ -66,7 +58,7 @@ var setVariablesCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = printer.print(SetVariablesResponseWrapper{response})
+		err = logHumanAndPrintJSON(SetVariablesResponseWrapper{response})
 		return err
 	},
 }

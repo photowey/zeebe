@@ -16,22 +16,22 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/commands"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/pb"
-	"log"
 )
 
 type FailJobResponseWrapper struct {
 	resp *pb.FailJobResponse
 }
 
-func (f FailJobResponseWrapper) protoMessage() ProtoMessage {
-	return f.resp
+func (f FailJobResponseWrapper) human() (string, error) {
+	return fmt.Sprint("Failed job with key", failJobKey, "and set remaining retries to", failJobRetriesFlag), nil
 }
 
-func (f FailJobResponseWrapper) print() {
-	log.Println("Failed job with key", failJobKey, "and set remaining retries to", failJobRetriesFlag)
+func (f FailJobResponseWrapper) json() (string, error) {
+	return toJSON(f.resp)
 }
 
 var (
@@ -46,19 +46,10 @@ var failJobCmd = &cobra.Command{
 	Args:    keyArg(&failJobKey),
 	PreRunE: initClient,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err     error
-			printer Printer
-		)
-		printer, err = findPrinter()
-		if err != nil {
-			return err
-		}
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()
 
-		var resp *pb.FailJobResponse
-		resp, err = client.NewFailJobCommand().
+		resp, err := client.NewFailJobCommand().
 			JobKey(failJobKey).
 			Retries(failJobRetriesFlag).
 			ErrorMessage(failJobErrorMessage).
@@ -66,7 +57,7 @@ var failJobCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = printer.print(FailJobResponseWrapper{resp})
+		err = logHumanAndPrintJSON(FailJobResponseWrapper{resp})
 		return err
 	},
 }
