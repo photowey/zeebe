@@ -26,6 +26,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 public final class JournalRecordReaderUtil {
 
   private final JournalRecordSerializer serializer;
+  private final ChecksumGenerator checksumGenerator = new ChecksumGenerator();
 
   public JournalRecordReaderUtil(final JournalRecordSerializer serializer) {
     this.serializer = serializer;
@@ -62,8 +63,8 @@ public final class JournalRecordReaderUtil {
       }
 
       // verify checksum
-      buffer.position(startPosition + metadataLength);
-      final long checksum = computeChecksum(buffer.slice(), recordLength);
+      final long checksum =
+          checksumGenerator.compute(buffer, startPosition + metadataLength, recordLength);
 
       if (checksum != metadata.checksum()) {
         // TODO: Throw an exception, when we introduce magic headers before each record
@@ -79,7 +80,9 @@ public final class JournalRecordReaderUtil {
       if (record != null && expectedIndex != record.index()) {
         buffer.reset();
         throw new InvalidIndex(
-            "Expected to read a record with next index"); // TODO : Update exception type, message
+            String.format(
+                "Expected to read a record with next index %d, but found %d",
+                expectedIndex, record.index()));
       }
       buffer.position(startPosition + metadataLength + recordLength);
       return new PersistedJournalRecord(metadata, record);
@@ -88,12 +91,5 @@ public final class JournalRecordReaderUtil {
       buffer.reset();
     }
     return null;
-  }
-
-  private long computeChecksum(final ByteBuffer buffer, final int length) {
-    final var checksumGenerator = new ChecksumGenerator();
-    final var record = buffer.slice();
-    record.limit(length);
-    return checksumGenerator.compute(record);
   }
 }

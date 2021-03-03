@@ -111,7 +111,8 @@ class MappedJournalSegmentWriter {
       throw boe;
     }
 
-    final long checksum = computeChecksum(buffer, startPosition + metadataLength, recordLength);
+    final long checksum =
+        checksumGenerator.compute(buffer, startPosition + metadataLength, recordLength);
 
     final JournalRecordMetadata metadata =
         writeMetadata(buffer, writeBuffer, startPosition, metadataLength, recordLength, checksum);
@@ -150,7 +151,8 @@ class MappedJournalSegmentWriter {
       throw boe;
     }
 
-    final long checksum = computeChecksum(buffer, startPosition + metadataLength, recordLength);
+    final long checksum =
+        checksumGenerator.compute(buffer, startPosition + metadataLength, recordLength);
 
     if (record.checksum() != checksum) {
       buffer.position(startPosition);
@@ -194,8 +196,7 @@ class MappedJournalSegmentWriter {
       final int offset,
       final JournalIndexedRecord indexedRecord) {
     writeBuffer.wrap(buffer, offset, buffer.limit() - offset);
-    final var recordLength = serializer.write(indexedRecord, writeBuffer);
-    return recordLength;
+    return serializer.write(indexedRecord, writeBuffer);
   }
 
   private void checkCanWrite(final ByteBuffer buffer, final JournalIndexedRecord indexedRecord) {
@@ -217,13 +218,6 @@ class MappedJournalSegmentWriter {
     if (buffer.position() + recordOffset + estimatedRecordLength > buffer.limit()) {
       throw new BufferOverflowException();
     }
-  }
-
-  private long computeChecksum(final ByteBuffer buffer, final int offset, final int length) {
-    buffer.position(offset);
-    final var record = buffer.slice();
-    record.limit(length);
-    return checksumGenerator.compute(record);
   }
 
   private void reset(final long index) {
