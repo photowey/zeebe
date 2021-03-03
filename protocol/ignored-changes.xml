@@ -46,4 +46,14 @@
     <differenceType>6001</differenceType>
     <field>OPENED</field>
   </difference>
+  <difference>
+    <className>io/zeebe/protocol/record/intent/MessageSubscriptionIntent</className>
+    <differenceType>6001</differenceType>
+    <field>CLOSE</field>
+  </difference>
+  <difference>
+    <className>io/zeebe/protocol/record/intent/MessageSubscriptionIntent</className>
+    <differenceType>6001</differenceType>
+    <field>CLOSED</field>
+  </difference>
 </differences>
