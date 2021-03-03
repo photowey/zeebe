@@ -29,8 +29,7 @@ public class PersistedJournalRecord implements JournalRecord {
   private final RecordMetadata metadata;
   private final RecordData record;
 
-  public PersistedJournalRecord(
-      final RecordMetadata metadata, final RecordData record) {
+  public PersistedJournalRecord(final RecordMetadata metadata, final RecordData record) {
     this.metadata = metadata;
     this.record = record;
   }

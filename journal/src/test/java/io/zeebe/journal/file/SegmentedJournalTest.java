@@ -329,6 +329,7 @@ public class SegmentedJournalTest {
     final var record = new RecordData(1, 1, data);
     final var serializer = new KryoSerializer();
     final ByteBuffer buffer = ByteBuffer.allocate(128);
-    return serializer.writeData(record, new UnsafeBuffer(buffer)) + serializer.getMetadataLength();
+    return serializer.writeData(record, new UnsafeBuffer(buffer), 0)
+        + serializer.getMetadataLength();
   }
 }

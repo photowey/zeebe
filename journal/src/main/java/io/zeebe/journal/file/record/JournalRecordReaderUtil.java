@@ -48,13 +48,13 @@ public final class JournalRecordReaderUtil {
     final int startPosition = buffer.position();
     try {
       final UnsafeBuffer directBuffer = new UnsafeBuffer(buffer.slice());
-      if (!serializer.hasMetadata(directBuffer)) {
+      if (!serializer.hasMetadata(directBuffer, 0)) {
         // No valid record here
         return null;
       }
-      final RecordMetadata metadata = serializer.readMetadata(directBuffer);
+      final RecordMetadata metadata = serializer.readMetadata(directBuffer, 0);
 
-      final int metadataLength = serializer.getMetadataLength(directBuffer);
+      final int metadataLength = serializer.getMetadataLength(directBuffer, 0);
       final var recordLength = metadata.length();
       if (buffer.position() + metadataLength + recordLength > buffer.limit()) {
         // There is no valid record here. This should not happen, if we have magic headers before
@@ -73,9 +73,7 @@ public final class JournalRecordReaderUtil {
       }
 
       // Read record
-      buffer.position(startPosition + metadataLength);
-      final UnsafeBuffer recordBuffer = new UnsafeBuffer(buffer, buffer.position(), recordLength);
-      final RecordData record = serializer.readData(recordBuffer);
+      final RecordData record = serializer.readData(directBuffer, metadataLength, recordLength);
 
       if (record != null && expectedIndex != record.index()) {
         buffer.reset();

@@ -18,7 +18,6 @@ package io.zeebe.journal.file.record;
 import io.atomix.utils.serializer.Namespace;
 import io.atomix.utils.serializer.Namespaces;
 import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -41,19 +40,21 @@ public final class KryoSerializer implements JournalRecordSerializer {
           .build();
 
   @Override
-  public int writeData(final RecordData record, final MutableDirectBuffer buffer) {
+  public int writeData(
+      final RecordData record, final MutableDirectBuffer buffer, final int offset) {
     final var serializedBytes = NAMESPACE.serialize(record);
-    if (serializedBytes.length > buffer.capacity()) {
+    if (offset + serializedBytes.length > buffer.capacity()) {
       throw new BufferOverflowException();
     }
-    buffer.putBytes(0, serializedBytes);
+    buffer.putBytes(offset, serializedBytes);
     return serializedBytes.length;
   }
 
   @Override
-  public int writeMetadata(final RecordMetadata metadata, final MutableDirectBuffer buffer) {
-    buffer.putLong(0, metadata.checksum());
-    buffer.putInt(0 + Long.BYTES, metadata.length());
+  public int writeMetadata(
+      final RecordMetadata metadata, final MutableDirectBuffer buffer, final int offset) {
+    buffer.putLong(offset, metadata.checksum());
+    buffer.putInt(offset + Long.BYTES, metadata.length());
     return Long.BYTES + Integer.BYTES;
   }
 
@@ -63,14 +64,14 @@ public final class KryoSerializer implements JournalRecordSerializer {
   }
 
   @Override
-  public boolean hasMetadata(final DirectBuffer buffer) {
-    return buffer.getLong(0) > 0 && buffer.getInt(Long.BYTES) > 0;
+  public boolean hasMetadata(final DirectBuffer buffer, final int offset) {
+    return buffer.getLong(offset) > 0 && buffer.getInt(offset + Long.BYTES) > 0;
   }
 
   @Override
-  public RecordMetadata readMetadata(final DirectBuffer buffer) {
-    final long checksum = buffer.getLong(0);
-    final int length = buffer.getInt(Long.BYTES);
+  public RecordMetadata readMetadata(final DirectBuffer buffer, final int offset) {
+    final long checksum = buffer.getLong(offset);
+    final int length = buffer.getInt(offset + Long.BYTES);
     if (!(checksum > 0 && length > 0)) {
       throw new InvalidRecordException("No valid metadata exists. Cannot read buffer.");
     }
@@ -78,13 +79,14 @@ public final class KryoSerializer implements JournalRecordSerializer {
   }
 
   @Override
-  public RecordData readData(final DirectBuffer buffer) {
-    final ByteBuffer bufferToRead = buffer.byteBuffer().slice();
+  public RecordData readData(final DirectBuffer buffer, final int offset, final int length) {
+    final byte[] bufferToRead = new byte[length];
+    buffer.getBytes(offset, bufferToRead);
     return NAMESPACE.deserialize(bufferToRead);
   }
 
   @Override
-  public int getMetadataLength(final DirectBuffer buffer) {
+  public int getMetadataLength(final DirectBuffer buffer, final int offset) {
     return getMetadataLength();
   }
 }

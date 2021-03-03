@@ -28,7 +28,6 @@ import io.zeebe.journal.file.record.RecordData;
 import io.zeebe.journal.file.record.RecordMetadata;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import org.agrona.DirectBuffer;
 import org.agrona.IoUtil;
@@ -48,6 +47,7 @@ class MappedJournalSegmentWriter {
   private final int maxEntrySize;
   private final ChecksumGenerator checksumGenerator = new ChecksumGenerator();
   private final JournalRecordSerializer serializer = new KryoSerializer();
+  private final MutableDirectBuffer writeBuffer = new UnsafeBuffer();
 
   MappedJournalSegmentWriter(
       final JournalSegmentFile file,
@@ -60,6 +60,7 @@ class MappedJournalSegmentWriter {
     this.index = index;
     firstIndex = segment.index();
     buffer = mapFile(file, segment);
+    writeBuffer.wrap(buffer);
     reset(0);
   }
 
@@ -92,18 +93,15 @@ class MappedJournalSegmentWriter {
 
     // TODO: Should reject append if the asqn is not greater than the previous record
 
-    final MutableDirectBuffer writeBuffer = new UnsafeBuffer();
     final int startPosition = buffer.position();
     final int metadataLength = serializer.getMetadataLength();
 
-    final RecordData indexedRecord =
-        new RecordData(recordIndex, asqn, data);
-    checkCanWrite(buffer, indexedRecord);
+    final RecordData indexedRecord = new RecordData(recordIndex, asqn, data);
+    checkCanWrite(indexedRecord);
 
     final int recordLength;
     try {
-      recordLength =
-          writeRecord(buffer, writeBuffer, startPosition + metadataLength, indexedRecord);
+      recordLength = writeRecord(startPosition + metadataLength, indexedRecord);
     } catch (final BufferOverflowException boe) {
       buffer.position(startPosition);
       throw boe;
@@ -112,8 +110,7 @@ class MappedJournalSegmentWriter {
     final long checksum =
         checksumGenerator.compute(buffer, startPosition + metadataLength, recordLength);
 
-    final RecordMetadata metadata =
-        writeMetadata(buffer, writeBuffer, startPosition, metadataLength, recordLength, checksum);
+    final RecordMetadata metadata = writeMetadata(startPosition, recordLength, checksum);
 
     updateLastWrittenEntry(metadata, indexedRecord, startPosition);
 
@@ -132,18 +129,15 @@ class MappedJournalSegmentWriter {
               nextIndex, record.index()));
     }
 
-    final MutableDirectBuffer writeBuffer = new UnsafeBuffer();
     final int startPosition = buffer.position();
     final int metadataLength = serializer.getMetadataLength();
 
-    final RecordData indexedRecord =
-        new RecordData(record.index(), record.asqn(), record.data());
-    checkCanWrite(buffer, indexedRecord);
+    final RecordData indexedRecord = new RecordData(record.index(), record.asqn(), record.data());
+    checkCanWrite(indexedRecord);
 
     final int recordLength;
     try {
-      recordLength =
-          writeRecord(buffer, writeBuffer, startPosition + metadataLength, indexedRecord);
+      recordLength = writeRecord(startPosition + metadataLength, indexedRecord);
     } catch (final BufferOverflowException boe) {
       buffer.position(startPosition);
       throw boe;
@@ -158,8 +152,7 @@ class MappedJournalSegmentWriter {
           String.format("Failed to append record %s. Checksum does not match", record));
     }
 
-    final RecordMetadata metadata =
-        writeMetadata(buffer, writeBuffer, startPosition, metadataLength, recordLength, checksum);
+    final RecordMetadata metadata = writeMetadata(startPosition, recordLength, checksum);
 
     updateLastWrittenEntry(metadata, indexedRecord, startPosition);
 
@@ -167,37 +160,23 @@ class MappedJournalSegmentWriter {
   }
 
   private void updateLastWrittenEntry(
-      final RecordMetadata metadata,
-      final RecordData recordRead,
-      final int startPosition) {
+      final RecordMetadata metadata, final RecordData recordRead, final int startPosition) {
     lastEntry = new PersistedJournalRecord(metadata, recordRead);
     index.index(lastEntry, startPosition);
   }
 
   private RecordMetadata writeMetadata(
-      final ByteBuffer buffer,
-      final MutableDirectBuffer writeBuffer,
-      final int startPosition,
-      final int metadataLength,
-      final int recordLength,
-      final long checksum) {
-    writeBuffer.wrap(buffer, startPosition, metadataLength);
-    final RecordMetadata recordMetadata =
-        new RecordMetadata(checksum, recordLength);
-    serializer.writeMetadata(recordMetadata, writeBuffer);
+      final int startPosition, final int recordLength, final long checksum) {
+    final RecordMetadata recordMetadata = new RecordMetadata(checksum, recordLength);
+    serializer.writeMetadata(recordMetadata, writeBuffer, startPosition);
     return recordMetadata;
   }
 
-  private int writeRecord(
-      final ByteBuffer buffer,
-      final MutableDirectBuffer writeBuffer,
-      final int offset,
-      final RecordData indexedRecord) {
-    writeBuffer.wrap(buffer, offset, buffer.limit() - offset);
-    return serializer.writeData(indexedRecord, writeBuffer);
+  private int writeRecord(final int offset, final RecordData indexedRecord) {
+    return serializer.writeData(indexedRecord, writeBuffer, offset);
   }
 
-  private void checkCanWrite(final ByteBuffer buffer, final RecordData indexedRecord) {
+  private void checkCanWrite(final RecordData indexedRecord) {
     final var recordOffset = serializer.getMetadataLength();
 
     final int estimatedRecordLength =

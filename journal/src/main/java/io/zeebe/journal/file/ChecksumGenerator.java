@@ -25,10 +25,8 @@ public final class ChecksumGenerator {
   /** Compute checksum of given ByteBuffer */
   public long compute(final ByteBuffer buffer, final int offset, final int length) {
     buffer.position(offset);
-    final var record = buffer.slice();
-    record.limit(length);
     crc32.reset();
-    crc32.update(buffer);
+    crc32.update(buffer.slice().limit(length));
     return crc32.getValue();
   }
 }
