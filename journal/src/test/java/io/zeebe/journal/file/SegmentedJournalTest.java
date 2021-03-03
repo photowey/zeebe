@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.zeebe.journal.JournalReader;
 import io.zeebe.journal.JournalRecord;
 import io.zeebe.journal.file.record.JournalIndexedRecordImpl;
-import io.zeebe.journal.file.record.KryoSerializer;
+import io.zeebe.journal.file.record.SBESerializer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -327,7 +327,7 @@ public class SegmentedJournalTest {
 
   private int getSerializedSize(final DirectBuffer data) {
     final var record = new JournalIndexedRecordImpl(1, 1, data);
-    final var serializer = new KryoSerializer();
+    final var serializer = new SBESerializer();
     final ByteBuffer buffer = ByteBuffer.allocate(128);
     return serializer.write(record, new UnsafeBuffer(buffer)) + serializer.getMetadataLength();
   }

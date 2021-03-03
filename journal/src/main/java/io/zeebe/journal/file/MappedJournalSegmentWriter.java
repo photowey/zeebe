@@ -26,8 +26,8 @@ import io.zeebe.journal.file.record.JournalRecordMetadata;
 import io.zeebe.journal.file.record.JournalRecordMetadataImpl;
 import io.zeebe.journal.file.record.JournalRecordReaderUtil;
 import io.zeebe.journal.file.record.JournalRecordSerializer;
-import io.zeebe.journal.file.record.KryoSerializer;
 import io.zeebe.journal.file.record.PersistedJournalRecord;
+import io.zeebe.journal.file.record.SBESerializer;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -49,7 +49,7 @@ class MappedJournalSegmentWriter {
   private final JournalRecordReaderUtil recordUtil;
   private final int maxEntrySize;
   private final ChecksumGenerator checksumGenerator = new ChecksumGenerator();
-  private final JournalRecordSerializer serializer = new KryoSerializer();
+  private final JournalRecordSerializer serializer = new SBESerializer();
 
   MappedJournalSegmentWriter(
       final JournalSegmentFile file,
