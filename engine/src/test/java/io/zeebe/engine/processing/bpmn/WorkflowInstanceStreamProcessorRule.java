@@ -122,7 +122,11 @@ public final class WorkflowInstanceStreamProcessorRule extends ExternalResource
               processingContext.getWriters());
 
           JobEventProcessors.addJobProcessors(
-              typedRecordProcessors, zeebeState, type -> {}, Integer.MAX_VALUE);
+              typedRecordProcessors,
+              zeebeState,
+              type -> {},
+              Integer.MAX_VALUE,
+              processingContext.getWriters());
           typedRecordProcessors.withListener(this);
           return typedRecordProcessors;
         });

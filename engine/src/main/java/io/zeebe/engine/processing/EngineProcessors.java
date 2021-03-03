@@ -180,7 +180,7 @@ public final class EngineProcessors {
       final int maxFragmentSize,
       final Writers writers) {
     return JobEventProcessors.addJobProcessors(
-        typedRecordProcessors, zeebeState, onJobsAvailableCallback, maxFragmentSize);
+        typedRecordProcessors, zeebeState, onJobsAvailableCallback, maxFragmentSize, writers);
   }
 
   private static void addMessageProcessors(

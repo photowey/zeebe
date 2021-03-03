@@ -10,6 +10,7 @@ package io.zeebe.engine.processing.streamprocessor;
 import io.zeebe.protocol.impl.record.value.workflowinstance.WorkflowInstanceRecord;
 import io.zeebe.protocol.record.ValueType;
 import io.zeebe.protocol.record.intent.Intent;
+import io.zeebe.protocol.record.intent.JobBatchIntent;
 import io.zeebe.protocol.record.intent.JobIntent;
 import io.zeebe.protocol.record.intent.MessageStartEventSubscriptionIntent;
 import io.zeebe.protocol.record.intent.MessageSubscriptionIntent;
@@ -52,6 +53,10 @@ public final class MigratedStreamProcessors {
                 JobIntent.COMPLETED,
                 JobIntent.FAIL,
                 JobIntent.FAILED)));
+    MIGRATED_VALUE_TYPES.put(
+        ValueType.JOB_BATCH,
+        MIGRATED_INTENT_FILTER_FACTORY.apply(
+            List.of(JobBatchIntent.ACTIVATE, JobBatchIntent.ACTIVATED)));
     MIGRATED_BPMN_PROCESSORS.add(BpmnElementType.TESTING_ONLY);
     MIGRATED_BPMN_PROCESSORS.add(BpmnElementType.EXCLUSIVE_GATEWAY);
     MIGRATED_BPMN_PROCESSORS.add(BpmnElementType.PARALLEL_GATEWAY);
