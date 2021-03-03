@@ -23,14 +23,14 @@ import org.agrona.DirectBuffer;
  * A JournalRecord stored in a buffer.
  *
  * <p>A {@link PersistedJournalRecord} consists of two parts. The first part is {@link
- * JournalRecordMetadata}. The second part is {@link JournalIndexedRecord}.
+ * RecordMetadata}. The second part is {@link RecordData}.
  */
 public class PersistedJournalRecord implements JournalRecord {
-  private final JournalRecordMetadata metadata;
-  private final JournalIndexedRecord record;
+  private final RecordMetadata metadata;
+  private final RecordData record;
 
   public PersistedJournalRecord(
-      final JournalRecordMetadata metadata, final JournalIndexedRecord record) {
+      final RecordMetadata metadata, final RecordData record) {
     this.metadata = metadata;
     this.record = record;
   }

@@ -21,28 +21,28 @@ import org.agrona.MutableDirectBuffer;
 public interface JournalRecordSerializer {
 
   /**
-   * Writes a {@link JournalIndexedRecord} to the buffer). Throws {@link
+   * Writes a {@link RecordData} to the buffer). Throws {@link
    * java.nio.BufferOverflowException} if there is not enough space to write the record.
    *
    * @param record to write
    * @param buffer to which the record will be written
    * @return the number of bytes that were written to the buffer
    */
-  int write(JournalIndexedRecord record, MutableDirectBuffer buffer);
+  int writeData(RecordData record, MutableDirectBuffer buffer);
 
   /**
-   * Writes a {@link JournalRecordMetadata} to the buffer)
+   * Writes a {@link RecordMetadata} to the buffer)
    *
    * @param metadata to write
    * @param buffer to which the metadata will be written
    * @return the number of bytes that were written to the buffer
    */
-  int write(JournalRecordMetadata metadata, MutableDirectBuffer buffer);
+  int writeMetadata(RecordMetadata metadata, MutableDirectBuffer buffer);
 
   /**
-   * Returns the number of bytes required to write a {@link JournalRecordMetadata} to a buffer. The
+   * Returns the number of bytes required to write a {@link RecordMetadata} to a buffer. The
    * length returned by this method must be equal to the length returned by {@link
-   * JournalRecordSerializer#write(JournalRecordMetadata, MutableDirectBuffer)}
+   * JournalRecordSerializer#writeMetadata(RecordMetadata, MutableDirectBuffer)}
    *
    * @return the expected length of a serialized metadata
    */
@@ -57,25 +57,25 @@ public interface JournalRecordSerializer {
   boolean hasMetadata(DirectBuffer buffer);
 
   /**
-   * Reads the {@link JournalRecordMetadata} from the buffer at offset 0. A valid record must exist
+   * Reads the {@link RecordMetadata} from the buffer at offset 0. A valid record must exist
    * in the buffer at this position.
    *
    * @param buffer to read
    * @return a journal record metadata that is read.
    */
-  JournalRecordMetadata readMetadata(DirectBuffer buffer);
+  RecordMetadata readMetadata(DirectBuffer buffer);
 
   /**
-   * Reads the {@link JournalIndexedRecord} from the buffer at offset 0. A valid record must exist
+   * Reads the {@link RecordData} from the buffer at offset 0. A valid record must exist
    * in the buffer at this position.
    *
    * @param buffer to read
    * @return a journal indexed record that is read.
    */
-  JournalIndexedRecord readRecord(DirectBuffer buffer);
+  RecordData readData(DirectBuffer buffer);
 
   /**
-   * Returns the length of the serialized {@link JournalRecordMetadata} at the buffer.
+   * Returns the length of the serialized {@link RecordMetadata} at the buffer.
    *
    * @param buffer to read
    * @return the length of the metadata

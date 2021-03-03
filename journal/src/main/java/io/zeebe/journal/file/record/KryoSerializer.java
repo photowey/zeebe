@@ -35,13 +35,13 @@ public final class KryoSerializer implements JournalRecordSerializer {
       new Namespace.Builder()
           .register(Namespaces.BASIC)
           .nextId(Namespaces.BEGIN_USER_CUSTOM_ID)
-          .register(JournalIndexedRecordImpl.class)
+          .register(RecordData.class)
           .register(UnsafeBuffer.class)
           .name("Journal")
           .build();
 
   @Override
-  public int write(final JournalIndexedRecord record, final MutableDirectBuffer buffer) {
+  public int writeData(final RecordData record, final MutableDirectBuffer buffer) {
     final var serializedBytes = NAMESPACE.serialize(record);
     if (serializedBytes.length > buffer.capacity()) {
       throw new BufferOverflowException();
@@ -51,7 +51,7 @@ public final class KryoSerializer implements JournalRecordSerializer {
   }
 
   @Override
-  public int write(final JournalRecordMetadata metadata, final MutableDirectBuffer buffer) {
+  public int writeMetadata(final RecordMetadata metadata, final MutableDirectBuffer buffer) {
     buffer.putLong(0, metadata.checksum());
     buffer.putInt(0 + Long.BYTES, metadata.length());
     return Long.BYTES + Integer.BYTES;
@@ -68,17 +68,17 @@ public final class KryoSerializer implements JournalRecordSerializer {
   }
 
   @Override
-  public JournalRecordMetadata readMetadata(final DirectBuffer buffer) {
+  public RecordMetadata readMetadata(final DirectBuffer buffer) {
     final long checksum = buffer.getLong(0);
     final int length = buffer.getInt(Long.BYTES);
     if (!(checksum > 0 && length > 0)) {
       throw new InvalidRecordException("No valid metadata exists. Cannot read buffer.");
     }
-    return new JournalRecordMetadataImpl(checksum, length);
+    return new RecordMetadata(checksum, length);
   }
 
   @Override
-  public JournalIndexedRecord readRecord(final DirectBuffer buffer) {
+  public RecordData readData(final DirectBuffer buffer) {
     final ByteBuffer bufferToRead = buffer.byteBuffer().slice();
     return NAMESPACE.deserialize(bufferToRead);
   }

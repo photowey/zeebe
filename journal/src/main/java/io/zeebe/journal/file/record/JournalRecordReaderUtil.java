@@ -52,7 +52,7 @@ public final class JournalRecordReaderUtil {
         // No valid record here
         return null;
       }
-      final JournalRecordMetadata metadata = serializer.readMetadata(directBuffer);
+      final RecordMetadata metadata = serializer.readMetadata(directBuffer);
 
       final int metadataLength = serializer.getMetadataLength(directBuffer);
       final var recordLength = metadata.length();
@@ -75,7 +75,7 @@ public final class JournalRecordReaderUtil {
       // Read record
       buffer.position(startPosition + metadataLength);
       final UnsafeBuffer recordBuffer = new UnsafeBuffer(buffer, buffer.position(), recordLength);
-      final JournalIndexedRecord record = serializer.readRecord(recordBuffer);
+      final RecordData record = serializer.readData(recordBuffer);
 
       if (record != null && expectedIndex != record.index()) {
         buffer.reset();

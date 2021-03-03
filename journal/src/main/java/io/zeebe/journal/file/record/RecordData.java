@@ -17,35 +17,32 @@ package io.zeebe.journal.file.record;
 
 import org.agrona.DirectBuffer;
 
-public class JournalIndexedRecordImpl implements JournalIndexedRecord {
+public class RecordData {
 
   private final long index;
   private final long asqn;
   private final DirectBuffer data;
 
-  public JournalIndexedRecordImpl(final long index, final long asqn, final DirectBuffer data) {
+  public RecordData(final long index, final long asqn, final DirectBuffer data) {
     this.index = index;
     this.asqn = asqn;
     this.data = data;
   }
 
-  @Override
   public long index() {
     return index;
   }
 
-  @Override
   public long asqn() {
     return asqn;
   }
 
-  @Override
   public DirectBuffer data() {
     return data;
   }
 
   @Override
   public String toString() {
-    return "JournalIndexedRecordImpl{" + "index=" + index + ", asqn=" + asqn + '}';
+    return "RecordData{" + "index=" + index + ", asqn=" + asqn + ", data=" + data + '}';
   }
 }

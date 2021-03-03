@@ -15,29 +15,26 @@
  */
 package io.zeebe.journal.file.record;
 
-import org.agrona.DirectBuffer;
+public final class RecordMetadata {
 
-/** JournalIndexedRecord is a part of {@link PersistedJournalRecord} */
-public interface JournalIndexedRecord {
+  private final long checksum;
+  private final int length;
 
-  /**
-   * The index of the record
-   *
-   * @return index
-   */
-  long index();
+  public RecordMetadata(final long checksum, final int recordLength) {
+    this.checksum = checksum;
+    length = recordLength;
+  }
 
-  /**
-   * The asqn of the record
-   *
-   * @return asqn
-   */
-  long asqn();
+  public long checksum() {
+    return checksum;
+  }
 
-  /**
-   * The data of the record
-   *
-   * @return the data
-   */
-  DirectBuffer data();
+  public int length() {
+    return length;
+  }
+
+  @Override
+  public String toString() {
+    return "RecordMetadata{" + "checksum=" + checksum + ", length=" + length + '}';
+  }
 }
