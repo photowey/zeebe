@@ -207,6 +207,7 @@ public final class JobBatchActivateProcessor implements TypedRecordProcessor<Job
 
     rejectionWriter.appendRejection(record, rejectionType, rejectionReason);
     responseWriter.writeRejectionOnCommand(record, rejectionType, rejectionReason);
+    responseWriter.flush();
   }
 
   private void raiseIncidentJobTooLargeForMessageSize(final long jobKey, final JobRecord job) {
