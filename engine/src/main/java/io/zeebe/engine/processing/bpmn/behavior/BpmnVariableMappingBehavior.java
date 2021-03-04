@@ -12,9 +12,11 @@ import io.zeebe.engine.processing.bpmn.BpmnElementContext;
 import io.zeebe.engine.processing.common.ExpressionProcessor;
 import io.zeebe.engine.processing.common.Failure;
 import io.zeebe.engine.processing.deployment.model.element.ExecutableFlowNode;
+import io.zeebe.engine.processing.streamprocessor.writers.StateWriter;
 import io.zeebe.engine.state.ZeebeState;
 import io.zeebe.engine.state.immutable.ElementInstanceState;
 import io.zeebe.engine.state.mutable.MutableVariableState;
+import io.zeebe.protocol.impl.record.value.variable.VariableRecord;
 import io.zeebe.protocol.impl.record.value.workflowinstance.WorkflowInstanceRecord;
 import io.zeebe.util.Either;
 import java.util.Optional;
@@ -24,12 +26,18 @@ public final class BpmnVariableMappingBehavior {
   private final ExpressionProcessor expressionProcessor;
   private final MutableVariableState variablesState;
   private final ElementInstanceState elementInstanceState;
+  private final StateWriter stateWriter;
+  private final VariableRecord variableRecord;
 
   public BpmnVariableMappingBehavior(
-      final ExpressionProcessor expressionProcessor, final ZeebeState zeebeState) {
+      final StateWriter stateWriter,
+      final ExpressionProcessor expressionProcessor,
+      final ZeebeState zeebeState) {
     this.expressionProcessor = expressionProcessor;
     elementInstanceState = zeebeState.getElementInstanceState();
     variablesState = zeebeState.getVariableState();
+    this.stateWriter = stateWriter;
+    variableRecord = new VariableRecord();
   }
 
   /**
@@ -48,6 +56,8 @@ public final class BpmnVariableMappingBehavior {
           .evaluateVariableMappingExpression(inputMappingExpression.get(), scopeKey)
           .map(
               result -> {
+                // TODO(zell): write follow up events to set variables after
+                // https://github.com/zeebe-io/zeebe/pull/6464 is merged
                 final var workflowKey = context.getWorkflowKey();
                 variablesState.setVariablesLocalFromDocument(scopeKey, workflowKey, result);
                 return null;

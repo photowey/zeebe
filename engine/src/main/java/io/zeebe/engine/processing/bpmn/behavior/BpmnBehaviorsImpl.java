@@ -53,7 +53,8 @@ public final class BpmnBehaviorsImpl implements BpmnBehaviors {
 
     stateBehavior = new BpmnStateBehavior(zeebeState);
     stateTransitionGuard = new WorkflowInstanceStateTransitionGuard(stateBehavior);
-    variableMappingBehavior = new BpmnVariableMappingBehavior(expressionBehavior, zeebeState);
+    variableMappingBehavior =
+        new BpmnVariableMappingBehavior(writers.state(), expressionBehavior, zeebeState);
     stateTransitionBehavior =
         new BpmnStateTransitionBehavior(
             streamWriter,

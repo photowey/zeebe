@@ -211,9 +211,14 @@ public final class BpmnStateTransitionBehavior {
     streamWriter.appendFollowUpEvent(
         childInstanceKey, WorkflowInstanceIntent.ELEMENT_ACTIVATING, childInstanceRecord);
 
-    stateBehavior.updateElementInstance(context, ElementInstance::spawnToken);
+    if (!MigratedStreamProcessors.isMigrated(context.getBpmnElementType())) {
+      stateBehavior.updateElementInstance(context, ElementInstance::spawnToken);
 
-    return stateBehavior.createChildElementInstance(context, childInstanceKey, childInstanceRecord);
+      return stateBehavior.createChildElementInstance(
+          context, childInstanceKey, childInstanceRecord);
+    }
+
+    return null;
   }
 
   public void activateElementInstanceInFlowScope(
